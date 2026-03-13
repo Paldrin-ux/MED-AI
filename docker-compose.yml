@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  medai:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./instance:/app/instance          # SQLite persistence
+      - ./app/uploads:/app/app/uploads    # Uploaded scans
+      - ./app/ai/weights:/app/app/ai/weights  # Model weights
+    environment:
+      FLASK_ENV: development
+      SECRET_KEY: "change-me-in-production"
+      INFERENCE_DEVICE: cpu               # Set to "cuda" for GPU container
+    restart: unless-stopped

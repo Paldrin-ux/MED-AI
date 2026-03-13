@@ -1,0 +1,528 @@
+﻿{% extends "base.html" %}
+{% block title %}Upload Scan - MedAI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Upload Scan</h1>
+    <p class="page-sub">MRI · CT · X-Ray · Skin · DICOM · NIfTI</p>
+  </div>
+</div>
+
+<div class="upload-layout">
+
+  <div class="upload-panel">
+    <form id="uploadForm" method="POST" action="{{ url_for('main.upload') }}" enctype="multipart/form-data">
+
+      <!-- STEP 1 -->
+      <div class="step-indicator">
+        <span class="step-num">1</span>
+        <span class="step-label">Select Scan Type</span>
+      </div>
+
+      <div class="modality-section">
+        <p class="modality-hint">Choosing the correct type significantly improves AI accuracy</p>
+        <div class="modality-grid">
+
+          <label class="modality-card">
+            <input type="radio" name="scan_type" value="brain_mri" required/>
+            <div class="modality-inner">
+              <span class="modality-icon">&#x1F9E0;</span>
+              <span class="modality-name">Brain MRI</span>
+              <span class="modality-desc">Tumor, Stroke, Lesion</span>
+            </div>
+          </label>
+
+          <label class="modality-card">
+            <input type="radio" name="scan_type" value="chest_xray"/>
+            <div class="modality-inner">
+              <span class="modality-icon">&#x1FAC1;</span>
+              <span class="modality-name">Chest X-Ray</span>
+              <span class="modality-desc">Pneumonia, TB, COVID-19</span>
+            </div>
+          </label>
+
+          <label class="modality-card">
+            <input type="radio" name="scan_type" value="ct_scan"/>
+            <div class="modality-inner">
+              <span class="modality-icon">&#x1FA7B;</span>
+              <span class="modality-name">CT Scan</span>
+              <span class="modality-desc">Stroke, Hemorrhage, Mass</span>
+            </div>
+          </label>
+
+          <label class="modality-card">
+            <input type="radio" name="scan_type" value="mri_spine"/>
+            <div class="modality-inner">
+              <span class="modality-icon">&#x1F9B4;</span>
+              <span class="modality-name">Spine / Body MRI</span>
+              <span class="modality-desc">Disc, Tumor, Fracture</span>
+            </div>
+          </label>
+
+          <label class="modality-card">
+            <input type="radio" name="scan_type" value="abdominal"/>
+            <div class="modality-inner">
+              <span class="modality-icon">&#x1FAC0;</span>
+              <span class="modality-name">Abdominal</span>
+              <span class="modality-desc">Liver, Kidney, Organ mass</span>
+            </div>
+          </label>
+
+          <label class="modality-card">
+            <input type="radio" name="scan_type" value="skin"/>
+            <div class="modality-inner">
+              <span class="modality-icon">&#x1F52C;</span>
+              <span class="modality-name">Skin / Dermatology</span>
+              <span class="modality-desc">Acne, Rash, Lesion, Cancer</span>
+            </div>
+          </label>
+
+          <label class="modality-card">
+            <input type="radio" name="scan_type" value="xray_bone"/>
+            <div class="modality-inner">
+              <span class="modality-icon">&#x1F9B4;</span>
+              <span class="modality-name">X-Ray / Bone &amp; Joint</span>
+              <span class="modality-desc">Fracture, Dislocation, Arthritis</span>
+            </div>
+          </label>
+
+          <label class="modality-card">
+            <input type="radio" name="scan_type" value="general"/>
+            <div class="modality-inner">
+              <span class="modality-icon">&#x1F4CB;</span>
+              <span class="modality-name">General / Other</span>
+              <span class="modality-desc">Unknown or other type</span>
+            </div>
+          </label>
+
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-indicator step-indicator--2">
+        <span class="step-num">2</span>
+        <span class="step-label">Upload Your Scan</span>
+      </div>
+
+      <div id="dropZone" class="drop-zone" style="cursor:pointer;">
+        <div class="drop-icon">&#x2B06;</div>
+        <p class="drop-title">Drop your scan here</p>
+        <p class="drop-sub">or click to browse &mdash; PNG · JPG · DICOM · NIfTI</p>
+      </div>
+
+      <div class="consent-bar" id="consentBar">
+        <span class="consent-icon">&#x1F6E1;&#xFE0F;</span>
+        <span class="consent-text">
+          By using this Medical AI Analysis System, you agree to the
+          <a href="#" class="consent-link" id="termsLink">Terms of Agreement</a>.
+          The system will analyze uploaded medical images to assist in detecting possible conditions.
+          Results are for informational purposes only and should not replace professional medical consultation.
+        </span>
+      </div>
+
+      <input type="file" id="fileInput" name="file"
+             accept=".png,.jpg,.jpeg,.dcm,.nii,.gz,application/dicom"
+             class="file-input-hidden" required
+             style="position:absolute;left:-9999px;opacity:0;pointer-events:none;"/>
+
+      <div id="previewSection" class="preview-section hidden">
+        <img id="previewImg" src="" alt="Preview" class="preview-img"/>
+        <div id="previewMeta" class="preview-meta"></div>
+      </div>
+
+      <div id="progressBar" class="progress-bar-wrap hidden">
+        <div class="progress-bar-track">
+          <div id="progressFill" class="progress-bar-fill" style="width:0%"></div>
+        </div>
+        <span id="progressLabel" class="progress-label">Analysing with Gemini Vision AI&#x2026;</span>
+      </div>
+
+      <div class="camera-section">
+        <button type="button" id="cameraBtn" class="btn btn-ghost btn-sm">&#x1F4F7; Capture from Camera</button>
+        <video id="cameraVideo" class="hidden" autoplay playsinline></video>
+        <canvas id="cameraCanvas" class="hidden"></canvas>
+        <button type="button" id="captureBtn" class="btn btn-sm btn-primary hidden">Take Photo</button>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-indicator step-indicator--3">
+        <span class="step-num">3</span>
+        <span class="step-label">Analyse Scan</span>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary btn-full" disabled>
+        &#x1F52C; Analyse Scan
+      </button>
+
+    </form>
+  </div>
+
+  <div class="upload-info">
+    <div class="info-card info-card--ai">
+      <h3>&#x1F916; AI Engine</h3>
+      <p>Powered by <strong>Gemini Vision AI</strong> &mdash; detects 50+ conditions including cancers, infections, skin diseases, and neurological findings.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>What Can Be Detected</h3>
+      <ul>
+        <li>&#x1F9E0; Brain tumors, stroke, MS, abscess</li>
+        <li>&#x1FAC1; Tuberculosis, pneumonia, lung cancer</li>
+        <li>&#x1F52C; Acne, eczema, melanoma, psoriasis</li>
+        <li>&#x1FA7B; Organ cancers, kidney stones</li>
+        <li>&#x1F9B4; Fractures, dislocations, arthritis</li>
+        <li>&#x1FA7A; Disc herniation, spinal stenosis</li>
+      </ul>
+    </div>
+
+    <div class="info-card info-card--warn">
+      <h3>&#x26A0; Disclaimer</h3>
+      <p>AI predictions are decision-support tools only. All results must be reviewed by a qualified doctor before clinical use.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TERMS MODAL -->
+<div id="termsOverlay" class="terms-overlay" role="dialog" aria-modal="true" style="display:none;">
+  <div class="terms-modal">
+
+    <div class="terms-modal__header">
+      <div class="terms-modal__icon">&#x1F6E1;&#xFE0F;</div>
+      <div>
+        <h2 class="terms-modal__title">Terms of Agreement</h2>
+        <p class="terms-modal__subtitle">Medical AI Analysis System &mdash; Informed Consent &amp; Data Privacy</p>
+      </div>
+      <button type="button" class="fmtpick-close" onclick="closeTermsModal()" style="margin-left:auto">&#x2715;</button>
+    </div>
+
+    <div class="terms-modal__body">
+
+      <div class="terms-badges">
+        <span class="terms-badge terms-badge--hipaa">HIPAA Compliant</span>
+        <span class="terms-badge terms-badge--gdpr">GDPR Compliant</span>
+        <span class="terms-badge terms-badge--ph">R.A. 10173 (DPA)</span>
+      </div>
+
+      <div class="terms-highlight">
+        <strong>&#x2695; AI Tool &mdash; Not a Medical Device.</strong> MedAI uses artificial intelligence to assist clinical review only. Results are not a substitute for professional medical advice, diagnosis, or treatment from a licensed healthcare provider.
+      </div>
+
+      <div class="terms-section">
+        <h4>&#x1F4C2; What We Collect</h4>
+        <ul>
+          <li>The uploaded medical image (temporarily stored for AI analysis only)</li>
+          <li>Scan type and any metadata embedded in the file (e.g., DICOM headers)</li>
+          <li>AI-generated analysis result linked to your account</li>
+          <li>Timestamps for security audit and compliance logging</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <h4>&#x1F1FA;&#x1F1F8; HIPAA &mdash; Health Insurance Portability &amp; Accountability Act</h4>
+        <ul>
+          <li>Your Protected Health Information (PHI) is handled with administrative, physical, and technical safeguards</li>
+          <li>Images are transmitted and stored using <strong>AES-256 encryption</strong> over HTTPS (TLS 1.2+)</li>
+          <li>We do <strong>not</strong> disclose, sell, or share your PHI with third parties without your explicit consent</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <h4>&#x1F1EA;&#x1F1FA; GDPR &mdash; General Data Protection Regulation</h4>
+        <ul>
+          <li>Legal basis for processing: <strong>your explicit informed consent</strong> (Art. 6(1)(a) and Art. 9(2)(a))</li>
+          <li>Medical images are classified as <strong>special category data</strong> under Article 9</li>
+          <li>You have the right to: access, rectify, erase, restrict processing, and data portability</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <h4>&#x1F1F5;&#x1F1ED; R.A. 10173 &mdash; Data Privacy Act of 2012 (Philippines)</h4>
+        <ul>
+          <li>Processing is done under a <strong>lawful basis</strong> with your freely given, specific, and informed consent</li>
+          <li>You have the right to: be informed, access, object, erasure/blocking, damages, data portability</li>
+          <li>We implement <strong>Privacy by Design</strong> principles per NPC guidelines</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <h4>&#x1F916; AI Processing &amp; Third Parties</h4>
+        <ul>
+          <li>Your image is sent to <strong>Google Gemini Vision AI</strong> &mdash; processed transiently, not retained after response</li>
+          <li>We do <strong>not</strong> use your images to train any AI model without separate consent</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="terms-modal__footer">
+      <button type="button" class="btn btn-primary" onclick="closeTermsModal()">&#x2705; Got it &mdash; Close</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ANALYSING OVERLAY -->
+<div id="analysingOverlay" class="analysing-overlay" style="display:none;" aria-live="polite">
+  <div class="analysing-box">
+    <div class="analysing-spinner">
+      <svg viewBox="0 0 50 50" class="analysing-svg">
+        <circle cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke="rgba(99,102,241,0.2)"/>
+        <circle cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke="#6366f1"
+                stroke-dasharray="60 200" stroke-linecap="round" class="analysing-arc"/>
+      </svg>
+      <span class="analysing-emoji">&#x1F52C;</span>
+    </div>
+    <h3 class="analysing-title">Analysing your scan&#x2026;</h3>
+    <p class="analysing-sub">Gemini Vision AI is examining the image. This usually takes 10&ndash;30 seconds.</p>
+    <div class="analysing-steps">
+      <div class="analysing-step" id="astep1">
+        <span class="astep-dot astep-dot--active"></span>
+        <span>Uploading &amp; processing file</span>
+      </div>
+      <div class="analysing-step" id="astep2">
+        <span class="astep-dot"></span>
+        <span>Enhancing image quality</span>
+      </div>
+      <div class="analysing-step" id="astep3">
+        <span class="astep-dot"></span>
+        <span>Running AI diagnosis</span>
+      </div>
+      <div class="analysing-step" id="astep4">
+        <span class="astep-dot"></span>
+        <span>Preparing clinical report</span>
+      </div>
+    </div>
+    <p class="analysing-note">Do not close or refresh this page</p>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+
+  var fileInput  = document.getElementById('fileInput');
+  var dropZone   = document.getElementById('dropZone');
+  var submitBtn  = document.getElementById('submitBtn');
+  var uploadForm = document.getElementById('uploadForm');
+  var _realClick = fileInput.click.bind(fileInput);
+
+  /* terms modal (view-only, no accept needed) */
+  window.closeTermsModal = function () {
+    document.getElementById('termsOverlay').style.display = 'none';
+  };
+
+  var termsLink = document.getElementById('termsLink');
+  if (termsLink) {
+    termsLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.getElementById('termsOverlay').style.display = 'flex';
+    });
+  }
+
+  /* drop zone */
+  if (dropZone) {
+    dropZone.addEventListener('click', function (e) {
+      e.stopImmediatePropagation();
+      _realClick();
+    }, true);
+
+    dropZone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', function () {
+      dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      var files = e.dataTransfer.files;
+      if (!files.length) return;
+      var dt = new DataTransfer();
+      dt.items.add(files[0]);
+      fileInput.files = dt.files;
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  /* camera */
+  var cameraBtn = document.getElementById('cameraBtn');
+  if (cameraBtn) {
+    cameraBtn.addEventListener('click', function () {
+      var video = document.getElementById('cameraVideo');
+      var captureBtn = document.getElementById('captureBtn');
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(function (stream) {
+          video.srcObject = stream;
+          video.classList.remove('hidden');
+          captureBtn.classList.remove('hidden');
+        })
+        .catch(function () { alert('Camera access denied or not available.'); });
+    });
+  }
+
+  /* modality cards */
+  document.querySelectorAll('.modality-card input[type=radio]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      document.querySelectorAll('.modality-card').forEach(function (c) { c.classList.remove('selected'); });
+      this.closest('.modality-card').classList.add('selected');
+      checkSubmitReady();
+    });
+  });
+
+  /* file change */
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      checkSubmitReady();
+      if (this.files.length > 0) {
+        var f = this.files[0];
+        var ext = f.name.split('.').pop().toLowerCase();
+        var sizeKB = (f.size / 1024).toFixed(1);
+        var dropTitle = dropZone && dropZone.querySelector('.drop-title');
+        var dropSub   = dropZone && dropZone.querySelector('.drop-sub');
+        if (dropTitle) dropTitle.textContent = '\u2705 ' + f.name;
+        if (dropSub)   dropSub.textContent   = ext.toUpperCase() + ' \xB7 ' + sizeKB + ' KB';
+
+        var previewSection = document.getElementById('previewSection');
+        var previewImg = document.getElementById('previewImg');
+        var previewMeta = document.getElementById('previewMeta');
+        if (['png','jpg','jpeg'].indexOf(ext) !== -1 && previewSection && previewImg) {
+          var reader = new FileReader();
+          reader.onload = function(ev) { previewImg.src = ev.target.result; previewSection.classList.remove('hidden'); };
+          reader.readAsDataURL(f);
+        } else if (previewSection) {
+          previewSection.classList.add('hidden');
+        }
+        if (previewMeta) previewMeta.innerHTML = '<strong>' + f.name + '</strong> &middot; ' + ext.toUpperCase() + ' &middot; ' + sizeKB + ' KB';
+      }
+    });
+  }
+
+  function checkSubmitReady() {
+    var modalityOk = !!document.querySelector('.modality-card input[type=radio]:checked');
+    var fileOk = fileInput && fileInput.files.length > 0;
+    if (submitBtn) submitBtn.disabled = !(modalityOk && fileOk);
+  }
+
+  /* analysing steps */
+  function runSteps() {
+    var steps  = ['astep1','astep2','astep3','astep4'];
+    var delays = [0, 1200, 3500, 7000];
+    steps.forEach(function (id, i) {
+      setTimeout(function () {
+        if (i > 0) {
+          var prev = document.getElementById(steps[i-1]);
+          var dot  = prev.querySelector('.astep-dot');
+          dot.classList.remove('astep-dot--active');
+          dot.classList.add('astep-dot--done');
+          dot.textContent = '\u2713';
+        }
+        var cur = document.getElementById(id);
+        cur.querySelector('.astep-dot').classList.add('astep-dot--active');
+        cur.style.opacity = '1';
+      }, delays[i]);
+    });
+  }
+
+  /* form submit */
+  if (uploadForm) {
+    uploadForm.addEventListener('submit', function (e) {
+      if (!fileInput || !fileInput.files.length) { e.preventDefault(); return; }
+      var overlay = document.getElementById('analysingOverlay');
+      if (overlay) { overlay.style.display = 'flex'; runSteps(); }
+      var fill = document.getElementById('progressFill');
+      var bar  = document.getElementById('progressBar');
+      if (bar && fill) {
+        bar.classList.remove('hidden');
+        var pct = 0;
+        setInterval(function () { pct = Math.min(pct + (Math.random()*4+1), 90); fill.style.width = pct+'%'; }, 600);
+      }
+    });
+  }
+
+})();
+</script>
+
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+
+<style>
+/* Step indicators */
+.step-indicator{display:flex;align-items:center;gap:.65rem;margin:1.5rem 0 .75rem}
+.step-indicator--2{margin-top:1.75rem}
+.step-indicator--3{margin-top:1rem}
+.step-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 4px rgba(99,102,241,.2)}
+.step-label{font-size:.88rem;font-weight:700;color:#e2e8f0;letter-spacing:.02em}
+
+/* Consent bar */
+.consent-bar{display:flex;align-items:flex-start;gap:.65rem;margin:.75rem 0 1rem;padding:.85rem 1rem;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;font-size:.78rem;color:#94a3b8;line-height:1.6}
+.consent-icon{font-size:1rem;flex-shrink:0;margin-top:.1rem}
+.consent-link{color:#a5b4fc;font-weight:600;text-decoration:none;border-bottom:1px dashed rgba(165,180,252,.4);transition:color .2s,border-color .2s}
+.consent-link:hover{color:#c7d2fe;border-bottom-color:rgba(199,210,254,.7)}
+
+/* Modality */
+.modality-section{margin-bottom:.5rem}
+.modality-hint{font-size:.78rem;color:var(--text-muted,#94a3b8);margin-bottom:.75rem}
+.modality-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.modality-card{cursor:pointer;border-radius:10px;border:1.5px solid rgba(255,255,255,.08);transition:all .2s;background:rgba(255,255,255,.03)}
+.modality-card input{display:none}
+.modality-inner{display:flex;flex-direction:column;align-items:center;padding:.75rem .5rem;gap:.2rem;text-align:center}
+.modality-icon{font-size:1.4rem}
+.modality-name{font-size:.75rem;font-weight:600;color:var(--text-primary,#e2e8f0);line-height:1.2}
+.modality-desc{font-size:.65rem;color:var(--text-muted,#94a3b8);line-height:1.2}
+.modality-card:hover{border-color:rgba(99,102,241,.5);background:rgba(99,102,241,.08);transform:translateY(-1px)}
+.modality-card.selected{border-color:#6366f1;background:rgba(99,102,241,.15);box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+.modality-card.selected .modality-name{color:#a5b4fc}
+.info-card--ai{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1));border-color:rgba(99,102,241,.3)!important}
+.info-card--ai h3{color:#a5b4fc}
+.drop-zone.drag-over{border-color:#6366f1!important;background:rgba(99,102,241,.1)!important;transform:scale(1.01)}
+
+/* Terms modal */
+.terms-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem}
+.terms-modal{background:var(--bg-card,#1e293b);border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden}
+.terms-modal__header{display:flex;align-items:flex-start;gap:.875rem;padding:1.25rem 1.5rem 1rem;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.terms-modal__icon{font-size:1.75rem;line-height:1;margin-top:2px}
+.terms-modal__title{font-size:1rem;font-weight:700;color:var(--text-primary,#e2e8f0);margin-bottom:.2rem}
+.terms-modal__subtitle{font-size:.78rem;color:var(--text-muted,#94a3b8)}
+.terms-modal__body{padding:1.25rem 1.5rem;overflow-y:auto;flex:1}
+.terms-badges{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.terms-badge{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.25rem .6rem;border-radius:100px}
+.terms-badge--hipaa{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.terms-badge--gdpr{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3)}
+.terms-badge--ph{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.3)}
+.terms-highlight{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:10px;padding:.75rem 1rem;font-size:.82rem;color:var(--text-primary,#e2e8f0);margin-bottom:1.1rem;line-height:1.55}
+.terms-section{margin-bottom:1rem}
+.terms-section h4{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted,#94a3b8);margin-bottom:.4rem}
+.terms-section ul{padding-left:1.1rem}
+.terms-section li{font-size:.8rem;color:var(--text-primary,#e2e8f0);line-height:1.6;margin-bottom:.2rem}
+.terms-section li strong{color:#c7d2fe}
+.terms-modal__footer{display:flex;justify-content:flex-end;gap:.75rem;padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.fmtpick-close{background:none;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text-muted,#94a3b8);font-size:.9rem;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.fmtpick-close:hover{background:rgba(255,255,255,.08);color:#e2e8f0}
+
+/* Analysing overlay */
+.analysing-overlay{position:fixed;inset:0;z-index:900;background:rgba(10,14,26,.93);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.analysing-box{display:flex;flex-direction:column;align-items:center;gap:1.25rem;text-align:center;max-width:340px;width:100%}
+.analysing-spinner{position:relative;width:90px;height:90px;flex-shrink:0}
+.analysing-svg{width:100%;height:100%}
+.analysing-arc{transform-origin:center;animation:spinArc 1.4s linear infinite}
+@keyframes spinArc{from{transform:rotate(-90deg)}to{transform:rotate(270deg)}}
+.analysing-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(.9);opacity:.7}50%{transform:scale(1.05);opacity:1}}
+.analysing-title{font-size:1.15rem;font-weight:700;color:var(--text-primary,#e2e8f0);margin:0}
+.analysing-sub{font-size:.83rem;color:var(--text-muted,#94a3b8);line-height:1.55;margin:0}
+.analysing-steps{width:100%;display:flex;flex-direction:column;gap:.5rem}
+.analysing-step{display:flex;align-items:center;gap:.75rem;padding:.55rem .875rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;font-size:.82rem;color:var(--text-muted,#94a3b8);opacity:.45;transition:opacity .4s,border-color .4s,background .4s;text-align:left}
+.analysing-step:has(.astep-dot--active),.analysing-step:has(.astep-dot--done){opacity:1}
+.analysing-step:has(.astep-dot--active){border-color:rgba(99,102,241,.45);background:rgba(99,102,241,.1);color:#c7d2fe}
+.analysing-step:has(.astep-dot--done){border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.07);color:#86efac}
+.astep-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,.15);font-size:.65rem;display:flex;align-items:center;justify-content:center;font-style:normal}
+.astep-dot--active{background:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.3);animation:dotPulse 1s ease-in-out infinite}
+.astep-dot--done{background:#22c55e;font-size:.65rem;width:16px;height:16px;color:#fff}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 3px rgba(99,102,241,.3)}50%{box-shadow:0 0 0 6px rgba(99,102,241,.15)}}
+.analysing-note{font-size:.73rem;color:var(--text-muted,#94a3b8);opacity:.65;margin:0}
+@media(max-width:600px){.modality-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+{% endblock %}

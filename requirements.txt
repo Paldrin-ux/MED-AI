@@ -1,0 +1,28 @@
+# ── Core ─────────────────────────────────────────────────────────────────────
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-Bcrypt==1.0.1
+Werkzeug==3.0.3
+
+# ── Database ──────────────────────────────────────────────────────────────────
+SQLAlchemy==2.0.30
+
+# ── AI / ML ───────────────────────────────────────────────────────────────────
+torch==2.3.0          # CPU build; use torch==2.3.0+cu118 for CUDA
+torchvision==0.18.0
+monai==1.3.0          # MONAI core with transforms + networks
+
+# ── Medical Imaging ───────────────────────────────────────────────────────────
+pydicom==2.4.4        # DICOM parsing
+nibabel==5.2.0        # NIfTI / NIfTI2 support
+SimpleITK==2.3.1      # ITK-based reader (MONAI NibabelReader fallback)
+Pillow==10.3.0        # PNG/JPG handling
+
+# ── Visualization ─────────────────────────────────────────────────────────────
+opencv-python-headless==4.9.0.80   # Grad-CAM heatmap overlays (headless for Docker)
+numpy==1.26.4
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+gunicorn==22.0.0       # Production WSGI server

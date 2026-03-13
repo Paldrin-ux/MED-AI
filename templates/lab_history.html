@@ -1,0 +1,110 @@
+﻿{% extends "base.html" %}
+{% block title %}Lab History - MedAI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Lab History</h1>
+    <p class="page-sub">All lab results analyzed for <strong>{{ current_user.name }}</strong></p>
+  </div>
+  <a href="{{ url_for('lab.lab_upload') }}" class="btn btn-primary">+ New Lab Analysis</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon">&#x1F9EA;</div>
+    <div class="stat-value">{{ stats.total }}</div>
+    <div class="stat-label">Total Reports</div>
+  </div>
+  <div class="stat-card stat-card--alert">
+    <div class="stat-icon">&#x1F6A8;</div>
+    <div class="stat-value">{{ stats.urgent }}</div>
+    <div class="stat-label">Urgent / Emergency</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">&#x26A0;&#xFE0F;</div>
+    <div class="stat-value">{{ stats.abnormal }}</div>
+    <div class="stat-label">With Abnormal Values</div>
+  </div>
+</div>
+
+{% if not records %}
+<div class="empty-state">
+  <div class="empty-icon">&#x1F9EA;</div>
+  <h3>No lab results yet</h3>
+  <p>Upload your first lab report to get an AI-powered analysis.</p>
+  <a href="{{ url_for('lab.lab_upload') }}" class="btn btn-primary">Upload Lab Result</a>
+</div>
+{% else %}
+<section>
+  <div class="section-header">
+    <h2>All Lab Reports</h2>
+    <span class="link-muted">{{ records|length }} record{{ 's' if records|length != 1 }}</span>
+  </div>
+  <div class="lab-history-list">
+    {% for r in records %}
+    <div class="lab-history-card {% if r.urgency == 'EMERGENCY' %}lab-card--emergency{% elif r.urgency == 'URGENT' %}lab-card--urgent{% elif r.urgency == 'SOON' %}lab-card--soon{% else %}lab-card--routine{% endif %}">
+      <div class="lab-card-indicator">
+        {% if r.urgency == 'EMERGENCY' %}&#x1F6A8;{% elif r.urgency == 'URGENT' %}&#x26A0;&#xFE0F;{% elif r.urgency == 'SOON' %}&#x1F514;{% else %}&#x2705;{% endif %}
+      </div>
+      <div class="lab-card-main">
+        <div class="lab-card-top">
+          <span class="lab-card-patient">{{ r.patient_name }}</span>
+          <span class="urgency-pill urgency-pill--{{ r.urgency.lower() }}">{{ r.urgency }}</span>
+        </div>
+        <div class="lab-card-meta">
+          <span>&#x1F4C5; {{ r.analysis_date.strftime('%b %d, %Y') }}</span>
+          {% if r.test_date and r.test_date != 'Not specified' %}<span>Test: {{ r.test_date }}</span>{% endif %}
+          {% if r.ordering_physician and r.ordering_physician != 'Not specified' %}<span>{{ r.ordering_physician }}</span>{% endif %}
+          <span>{{ r.original_filename }}</span>
+        </div>
+        <div class="lab-card-counts">
+          <span class="count-badge count-badge--normal">{{ r.normal_count }} Normal</span>
+          {% if r.abnormal_count and r.abnormal_count > 0 %}<span class="count-badge count-badge--abnormal">{{ r.abnormal_count }} Abnormal</span>{% endif %}
+          {% if r.critical_count and r.critical_count > 0 %}<span class="count-badge count-badge--critical">{{ r.critical_count }} Critical</span>{% endif %}
+        </div>
+        {% if r.summary %}<p class="lab-card-summary">{{ r.summary[:160] }}{% if r.summary|length > 160 %}...{% endif %}</p>{% endif %}
+      </div>
+      <div class="lab-card-actions">
+        <a href="{{ url_for('lab.lab_result_view', result_id=r.id) }}" class="btn btn-sm btn-outline">View Report</a>
+        <form method="POST" action="{{ url_for('lab.lab_delete', result_id=r.id) }}" onsubmit="return confirm('Delete this lab result?')">
+          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+.lab-history-list{display:flex;flex-direction:column;gap:.75rem;margin-top:.5rem}
+.lab-history-card{display:flex;align-items:flex-start;gap:1rem;padding:1.1rem 1.25rem;border-radius:14px;border:1.5px solid;background:rgba(255,255,255,.025);transition:transform .15s,box-shadow .15s}
+.lab-history-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.lab-card--routine{border-color:rgba(16,185,129,.2)}
+.lab-card--soon{border-color:rgba(251,191,36,.25)}
+.lab-card--urgent{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.03)}
+.lab-card--emergency{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.06)}
+.lab-card-indicator{font-size:1.5rem;flex-shrink:0;margin-top:.1rem;width:2rem;text-align:center}
+.lab-card-main{flex:1;min-width:0}
+.lab-card-top{display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem;flex-wrap:wrap}
+.lab-card-patient{font-size:1rem;font-weight:700;color:#f1f5f9}
+.urgency-pill{font-size:.65rem;font-weight:700;letter-spacing:.07em;padding:.2rem .6rem;border-radius:20px;border:1px solid}
+.urgency-pill--routine{color:#6ee7b7;border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.1)}
+.urgency-pill--soon{color:#fde68a;border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.1)}
+.urgency-pill--urgent{color:#fca5a5;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.1)}
+.urgency-pill--emergency{color:#fca5a5;border-color:rgba(239,68,68,.6);background:rgba(239,68,68,.15)}
+.lab-card-meta{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font-size:.75rem;color:#64748b;margin-bottom:.6rem}
+.lab-card-counts{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.55rem}
+.count-badge{font-size:.68rem;font-weight:700;padding:.18rem .55rem;border-radius:6px;border:1px solid}
+.count-badge--normal{color:#6ee7b7;border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.1)}
+.count-badge--abnormal{color:#fde68a;border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.1)}
+.count-badge--critical{color:#fca5a5;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.1)}
+.lab-card-summary{font-size:.8rem;color:#94a3b8;line-height:1.5;margin:0}
+.lab-card-actions{display:flex;flex-direction:column;gap:.5rem;flex-shrink:0;align-items:flex-end}
+.btn-danger{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:8px;padding:.35rem .85rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
+.btn-danger:hover{background:rgba(239,68,68,.22)}
+</style>
+{% endblock %}

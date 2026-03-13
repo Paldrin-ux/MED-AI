@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Login – MedAI{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">⬡</div>
+      <h1>MED<em>AI</em></h1>
+      <p class="auth-subtitle">AI Medical Image Analysis System</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.login') }}" class="auth-form" autocomplete="on">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required autofocus
+               placeholder="clinician@hospital.org"/>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required
+               placeholder="••••••••"/>
+      </div>
+      <div class="form-check">
+        <input type="checkbox" id="remember" name="remember"/>
+        <label for="remember">Keep me signed in</label>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">
+        Sign In <span>→</span>
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      No account? <a href="{{ url_for('auth.register') }}">Register</a>
+    </p>
+  </div>
+
+  <div class="auth-info">
+    <div class="info-badge">AI-POWERED</div>
+    <h2>Clinical-grade<br/>Image Analysis</h2>
+    <ul class="feature-list">
+      <li>🧠 Brain Tumor Detection</li>
+      <li>🩺 Stroke Indicators</li>
+      <li>🫀 Organ Segmentation</li>
+      <li>📊 Confidence Scoring</li>
+      <li>🔥 Priority Triage</li>
+    </ul>
+    <p class="disclaimer">⚠ For research and decision-support only. Clinical decisions must be made by licensed professionals.</p>
+  </div>
+</div>
+{% endblock %}

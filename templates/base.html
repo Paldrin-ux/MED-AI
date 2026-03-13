@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}MedAI â€“ AI Medical Analysis{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- Ambient background grid -->
+<div class="bg-grid" aria-hidden="true"></div>
+
+{% if current_user.is_authenticated %}
+<nav class="navbar">
+  <a href="{{ url_for('main.dashboard') }}" class="nav-brand">
+    
+    <span class="brand-text">MED<em>AI</em></span>
+  </a>
+  <div class="nav-links">
+    <a href="{{ url_for('main.dashboard') }}" class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}">Dashboard</a>
+    <a href="{{ url_for('main.upload') }}" class="nav-link {% if request.endpoint == 'main.upload' %}active{% endif %}">Radiology Scan</a>
+    <a href="{{ url_for('main.history') }}" class="nav-link {% if request.endpoint == 'main.history' %}active{% endif %}">Radiology History</a>
+    <a href="{{ url_for('lab.lab_upload') }}" class="nav-link {% if request.endpoint == 'lab.lab_upload' or request.endpoint == 'lab.lab_result_view' %}active{% endif %}">Lab Scan</a>
+    <a href="{{ url_for('lab.lab_history') }}" class="nav-link {% if request.endpoint == 'lab.lab_history' %}active{% endif %}">Lab History</a>
+  </div>
+  <div class="nav-user">
+    <span class="user-badge">{{ current_user.name[0].upper() }}</span>
+    <span class="user-name">{{ current_user.name }}</span>
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-ghost">Logout</a>
+  </div>
+</nav>
+{% endif %}
+
+<main class="main-content">
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }}">
+            <span>{{ msg }}</span>
+            <button onclick="this.parentElement.remove()" class="alert-close">Ã—</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+
+</main>
+
+<footer class="footer">
+  <p>MedAI Â© 2025 Â· AI-assisted analysis only Â· Always consult a qualified radiologist</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
+

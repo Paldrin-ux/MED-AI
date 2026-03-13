@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% block title %}Scan History – MedAI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Scan History</h1>
+    <p class="page-sub">All your uploaded and analysed scans</p>
+  </div>
+  <a href="{{ url_for('main.upload') }}" class="btn btn-primary">+ Upload Scan</a>
+</div>
+
+{% if pagination.items %}
+
+<!-- Column headers -->
+<div class="ht-header">
+  <div class="ht-col ht-col--scan">Scan</div>
+  <div class="ht-col ht-col--modality">Modality</div>
+  <div class="ht-col ht-col--date">Uploaded</div>
+  <div class="ht-col ht-col--result">Result</div>
+  <div class="ht-col ht-col--conf">Confidence</div>
+  <div class="ht-col ht-col--priority">Priority</div>
+  <div class="ht-col ht-col--actions">Actions</div>
+</div>
+
+<!-- Rows -->
+<div class="ht-list">
+  {% for up in pagination.items %}
+  {% set pred = up.prediction %}
+  <div class="ht-row {% if pred and pred.priority == 'HIGH' %}ht-row--high{% elif pred and pred.priority == 'MEDIUM' %}ht-row--medium{% endif %}">
+
+    <!-- Scan name -->
+    <div class="ht-col ht-col--scan">
+      <span class="ht-icon">🩻</span>
+      <span class="ht-filename" title="{{ up.original_name or up.filename }}">
+        {{ up.original_name or up.filename }}
+      </span>
+    </div>
+
+    <!-- Modality -->
+    <div class="ht-col ht-col--modality">
+      <span class="ht-text">{{ up.modality or '—' }}</span>
+    </div>
+
+    <!-- Date -->
+    <div class="ht-col ht-col--date">
+      <span class="ht-text">{{ up.upload_date.strftime('%Y-%m-%d') }}</span>
+    </div>
+
+    <!-- Result -->
+    <div class="ht-col ht-col--result">
+      {% if pred %}
+        <span class="ht-result" title="{{ pred.result_label }}">{{ pred.result_label }}</span>
+      {% else %}
+        <span class="ht-muted">—</span>
+      {% endif %}
+    </div>
+
+    <!-- Confidence -->
+    <div class="ht-col ht-col--conf">
+      {% if pred %}
+        {% set pct = "%.0f"|format(pred.confidence_score * 100) %}
+        <div class="ht-bar">
+          <div class="ht-bar__track">
+            <div class="ht-bar__fill {% if pred.confidence_score >= 0.75 %}ht-bar__fill--high{% elif pred.confidence_score >= 0.5 %}ht-bar__fill--med{% else %}ht-bar__fill--low{% endif %}"
+                 style="width:{{ pct }}%"></div>
+          </div>
+          <span class="ht-bar__pct">{{ pct }}%</span>
+        </div>
+      {% else %}
+        <span class="ht-muted">—</span>
+      {% endif %}
+    </div>
+
+    <!-- Priority -->
+    <div class="ht-col ht-col--priority">
+      {% if pred %}
+        <span class="priority-badge priority-{{ pred.priority.lower() }}">{{ pred.priority }}</span>
+      {% else %}
+        <span class="ht-muted">—</span>
+      {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div class="ht-col ht-col--actions">
+      {% if pred %}
+        <a href="{{ url_for('main.result', upload_id=up.id) }}" class="btn btn-sm btn-outline">View</a>
+      {% endif %}
+      <form method="POST" action="{{ url_for('main.delete_upload', upload_id=up.id) }}"
+            onsubmit="return confirm('Delete this scan and its analysis?')">
+        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+      </form>
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Pagination -->
+<div class="pagination">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('main.history', page=pagination.prev_num) }}" class="btn btn-sm btn-ghost">← Prev</a>
+  {% endif %}
+  <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for('main.history', page=pagination.next_num) }}" class="btn btn-sm btn-ghost">Next →</a>
+  {% endif %}
+</div>
+
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">📋</div>
+  <h3>No scan history yet</h3>
+  <p>Upload a scan to start your analysis history.</p>
+  <a href="{{ url_for('main.upload') }}" class="btn btn-primary">Upload First Scan</a>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+
+/* ── shared column widths ─────────────────────────────────
+   Using a 7-column flex layout so header and rows
+   always line up perfectly.
+──────────────────────────────────────────────────────────── */
+.ht-col          { display: flex; align-items: center; min-width: 0; }
+.ht-col--scan    { flex: 2 1 180px; gap: 0.5rem; }
+.ht-col--modality{ flex: 1 1 110px; }
+.ht-col--date    { flex: 1 1 100px; }
+.ht-col--result  { flex: 2 1 160px; }
+.ht-col--conf    { flex: 1 1 130px; }
+.ht-col--priority{ flex: 0 0 80px;  justify-content: center; }
+.ht-col--actions { flex: 0 0 120px; gap: 0.4rem; justify-content: flex-end; }
+
+/* ── header row ───────────────────────────────────────── */
+.ht-header {
+  display: flex;
+  gap: 0;
+  padding: 0 1.1rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.25rem;
+}
+.ht-header .ht-col {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+/* ── list container ───────────────────────────────────── */
+.ht-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── data row ─────────────────────────────────────────── */
+.ht-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0.75rem 1.1rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: border-color .15s, background .15s;
+  min-height: 52px;
+}
+.ht-row:hover {
+  background: var(--bg3);
+  border-color: var(--border2);
+}
+.ht-row--high   { border-left: 3px solid var(--high); }
+.ht-row--medium { border-left: 3px solid var(--medium); }
+
+/* ── cell content ─────────────────────────────────────── */
+.ht-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.ht-filename {
+  font-size: 0.85rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ht-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ht-result {
+  font-size: 0.83rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ht-muted {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* ── confidence bar ───────────────────────────────────── */
+.ht-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.ht-bar__track {
+  flex: 1;
+  height: 5px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 40px;
+}
+.ht-bar__fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .6s ease;
+}
+.ht-bar__fill--high { background: var(--success); }
+.ht-bar__fill--med  { background: var(--warn); }
+.ht-bar__fill--low  { background: var(--danger); }
+
+.ht-bar__pct {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ── actions ──────────────────────────────────────────── */
+.ht-col--actions form { margin: 0; }
+
+/* ── MOBILE: stack as cards ───────────────────────────── */
+@media (max-width: 700px) {
+  .ht-header { display: none; }
+
+  .ht-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.875rem;
+    gap: 0.5rem;
+    min-height: 0;
+  }
+  .ht-row--high   { border-left: 3px solid var(--high); }
+  .ht-row--medium { border-left: 3px solid var(--medium); }
+
+  /* all cols become full-width label+value rows */
+  .ht-col {
+    flex: none;
+    width: 100%;
+    gap: 0.5rem;
+  }
+  .ht-col--scan {
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.1rem;
+  }
+  .ht-col--modality::before { content: "Modality:";  }
+  .ht-col--date::before     { content: "Uploaded:";  }
+  .ht-col--result::before   { content: "Result:";    }
+  .ht-col--conf::before     { content: "Confidence:"; }
+  .ht-col--priority::before { content: "Priority:";  }
+
+  .ht-col--modality::before,
+  .ht-col--date::before,
+  .ht-col--result::before,
+  .ht-col--conf::before,
+  .ht-col--priority::before {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    min-width: 76px;
+    flex-shrink: 0;
+  }
+
+  .ht-col--priority { justify-content: flex-start; }
+
+  .ht-col--actions {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--border);
+    margin-top: 0.1rem;
+    flex: none;
+    width: 100%;
+  }
+  .ht-col--actions .btn { flex: 1; justify-content: center; }
+  .ht-col--actions form { flex: 1; }
+  .ht-col--actions form .btn { width: 100%; }
+
+  .ht-bar { gap: 0.4rem; }
+  .ht-bar__track { min-width: 60px; }
+}
+</style>
+{% endblock %}

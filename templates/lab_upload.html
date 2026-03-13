@@ -1,0 +1,244 @@
+﻿{% extends "base.html" %}
+{% block title %}Lab Results Analysis - MedAI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Lab Results Analysis</h1>
+    <p class="page-sub">CBC · Chemistry · Urinalysis · Thyroid · Lipid Panel · Any Lab Report</p>
+  </div>
+</div>
+
+<div class="upload-layout">
+
+  <div class="upload-panel">
+    <form id="labForm" method="POST" action="{{ url_for('lab.lab_upload') }}" enctype="multipart/form-data">
+
+      <div id="dropZone" class="drop-zone" style="cursor:pointer;">
+        <div class="drop-icon">&#x2B06;</div>
+        <p class="drop-title">Drop your lab report here</p>
+        <p class="drop-sub">or click to browse</p>
+        <p class="drop-formats">PDF &middot; PNG &middot; JPG &middot; DOCX &middot; TXT &middot; CSV</p>
+      </div>
+
+      <input type="file" id="fileInput" name="lab_file"
+             accept=".pdf,.png,.jpg,.jpeg,.docx,.doc,.txt,.csv"
+             required
+             style="position:absolute;left:-9999px;opacity:0;pointer-events:none;"/>
+
+      <div id="previewSection" class="preview-section hidden">
+        <img id="previewImg" src="" alt="Preview" class="preview-img"/>
+        <div id="previewMeta" class="preview-meta"></div>
+      </div>
+
+      <div id="progressBar" class="progress-bar-wrap hidden">
+        <div class="progress-bar-track">
+          <div id="progressFill" class="progress-bar-fill" style="width:0%"></div>
+        </div>
+        <span id="progressLabel" class="progress-label">Analysing with Gemini Vision AI…&#x2026;</span>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary btn-full" disabled>
+        &#x1F52C; Analyse Lab Report
+      </button>
+
+    </form>
+  </div>
+
+  <div class="upload-info">
+    <div class="info-card info-card--ai">
+      <h3>&#x1F916; AI Engine</h3>
+      <p>Powered by <strong>Gemini Vision AI</strong> — reads and interprets CBC, metabolic panels, thyroid, lipids, urinalysis, cultures, and more in plain English.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>What Gets Analyzed</h3>
+      <ul>
+        <li>&#x1F9EA; Every individual test value vs reference range</li>
+        <li>&#x26A0;&#xFE0F; Abnormal and critical flags explained</li>
+        <li>&#x1F4CA; Overall health summary in plain language</li>
+        <li>&#x1F469;&#x200D;&#x2695;&#xFE0F; Ordering physician and facility info</li>
+        <li>&#x1F6A8; Urgency level: Routine, Soon, Urgent, Emergency</li>
+        <li>&#x2705; Recommended next steps and follow-ups</li>
+      </ul>
+    </div>
+
+    <div class="info-card info-card--warn">
+      <h3>&#x26A0; Disclaimer</h3>
+      <p>AI analysis is for informational purposes only and does not constitute a medical diagnosis. Always consult your physician to interpret results in the context of your overall health.</p>
+    </div>
+  </div>
+</div>
+
+<div id="analysingOverlay" class="analysing-overlay" style="display:none;" aria-live="polite">
+  <div class="analysing-box">
+    <div class="analysing-spinner">
+      <svg viewBox="0 0 50 50" class="analysing-svg">
+        <circle cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke="rgba(99,102,241,0.2)"/>
+        <circle cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke="#6366f1"
+                stroke-dasharray="60 200" stroke-linecap="round" class="analysing-arc"/>
+      </svg>
+      <span class="analysing-emoji">&#x1F9EA;</span>
+    </div>
+    <h3 class="analysing-title">Analysing your lab report&#x2026;</h3>
+    <p class="analysing-sub">Kimi K2 Vision AI is reading every value. This usually takes 10&#x2013;30 seconds.</p>
+    <div class="analysing-steps">
+      <div class="analysing-step" id="astep1">
+        <span class="astep-dot astep-dot--active"></span>
+        <span>Uploading &amp; processing file</span>
+      </div>
+      <div class="analysing-step" id="astep2">
+        <span class="astep-dot"></span>
+        <span>Reading test values &amp; reference ranges</span>
+      </div>
+      <div class="analysing-step" id="astep3">
+        <span class="astep-dot"></span>
+        <span>Running clinical AI interpretation</span>
+      </div>
+      <div class="analysing-step" id="astep4">
+        <span class="astep-dot"></span>
+        <span>Preparing your plain-language report</span>
+      </div>
+    </div>
+    <p class="analysing-note">Do not close or refresh this page</p>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+
+  var fileInput = document.getElementById('fileInput');
+  var dropZone  = document.getElementById('dropZone');
+  var submitBtn = document.getElementById('submitBtn');
+  var labForm   = document.getElementById('labForm');
+
+  var _realClick = fileInput.click.bind(fileInput);
+
+  if (dropZone) {
+    dropZone.addEventListener('click', function (e) {
+      e.stopImmediatePropagation();
+      _realClick();
+    }, true);
+
+    dropZone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', function () {
+      dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      var files = e.dataTransfer.files;
+      if (!files.length) return;
+      var dt = new DataTransfer();
+      dt.items.add(files[0]);
+      fileInput.files = dt.files;
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      if (this.files.length > 0) {
+        var f = this.files[0];
+        var ext = f.name.split('.').pop().toLowerCase();
+        var sizeKB = (f.size / 1024).toFixed(1);
+
+        var dropTitle = dropZone && dropZone.querySelector('.drop-title');
+        var dropSub   = dropZone && dropZone.querySelector('.drop-sub');
+        if (dropTitle) dropTitle.textContent = '\u2705 ' + f.name;
+        if (dropSub)   dropSub.textContent   = ext.toUpperCase() + ' \xB7 ' + sizeKB + ' KB';
+
+        var previewSection = document.getElementById('previewSection');
+        var previewImg     = document.getElementById('previewImg');
+        var previewMeta    = document.getElementById('previewMeta');
+        if (['png','jpg','jpeg'].indexOf(ext) !== -1 && previewSection && previewImg) {
+          var reader = new FileReader();
+          reader.onload = function(ev) {
+            previewImg.src = ev.target.result;
+            previewSection.classList.remove('hidden');
+          };
+          reader.readAsDataURL(f);
+        } else if (previewSection) {
+          previewSection.classList.add('hidden');
+        }
+        if (previewMeta) {
+          previewMeta.innerHTML = '<strong>' + f.name + '</strong> &middot; ' + ext.toUpperCase() + ' &middot; ' + sizeKB + ' KB';
+        }
+
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+  }
+
+  function runSteps() {
+    var steps  = ['astep1','astep2','astep3','astep4'];
+    var delays = [0, 1500, 4000, 8000];
+    steps.forEach(function (id, i) {
+      setTimeout(function () {
+        if (i > 0) {
+          var prev = document.getElementById(steps[i-1]);
+          var dot  = prev.querySelector('.astep-dot');
+          dot.classList.remove('astep-dot--active');
+          dot.classList.add('astep-dot--done');
+          dot.textContent = '\u2713';
+        }
+        var cur = document.getElementById(id);
+        cur.querySelector('.astep-dot').classList.add('astep-dot--active');
+        cur.style.opacity = '1';
+      }, delays[i]);
+    });
+  }
+
+  if (labForm) {
+    labForm.addEventListener('submit', function (e) {
+      if (!fileInput || !fileInput.files.length) { e.preventDefault(); return; }
+      var overlay = document.getElementById('analysingOverlay');
+      if (overlay) { overlay.style.display = 'flex'; runSteps(); }
+      var fill = document.getElementById('progressFill');
+      var bar  = document.getElementById('progressBar');
+      if (bar && fill) {
+        bar.classList.remove('hidden');
+        var pct = 0;
+        setInterval(function () {
+          pct = Math.min(pct + (Math.random() * 4 + 1), 90);
+          fill.style.width = pct + '%';
+        }, 600);
+      }
+    });
+  }
+
+})();
+</script>
+
+<style>
+.drop-zone.drag-over{border-color:#6366f1!important;background:rgba(99,102,241,.1)!important;transform:scale(1.01)}
+.info-card--ai{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1));border-color:rgba(99,102,241,.3)!important}
+.info-card--ai h3{color:#a5b4fc}
+.analysing-overlay{position:fixed;inset:0;z-index:900;background:rgba(10,14,26,.93);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.analysing-box{display:flex;flex-direction:column;align-items:center;gap:1.25rem;text-align:center;max-width:340px;width:100%}
+.analysing-spinner{position:relative;width:90px;height:90px;flex-shrink:0}
+.analysing-svg{width:100%;height:100%}
+.analysing-arc{transform-origin:center;animation:spinArc 1.4s linear infinite}
+@keyframes spinArc{from{transform:rotate(-90deg)}to{transform:rotate(270deg)}}
+.analysing-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;animation:labPulse 2s ease-in-out infinite}
+@keyframes labPulse{0%,100%{transform:scale(.9);opacity:.7}50%{transform:scale(1.05);opacity:1}}
+.analysing-title{font-size:1.15rem;font-weight:700;color:var(--text-primary,#e2e8f0);margin:0}
+.analysing-sub{font-size:.83rem;color:var(--text-muted,#94a3b8);line-height:1.55;margin:0}
+.analysing-steps{width:100%;display:flex;flex-direction:column;gap:.5rem}
+.analysing-step{display:flex;align-items:center;gap:.75rem;padding:.55rem .875rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;font-size:.82rem;color:var(--text-muted,#94a3b8);opacity:.45;transition:opacity .4s,border-color .4s,background .4s;text-align:left}
+.analysing-step:has(.astep-dot--active),.analysing-step:has(.astep-dot--done){opacity:1}
+.analysing-step:has(.astep-dot--active){border-color:rgba(99,102,241,.45);background:rgba(99,102,241,.1);color:#c7d2fe}
+.analysing-step:has(.astep-dot--done){border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.07);color:#86efac}
+.astep-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,.15);font-size:.65rem;display:flex;align-items:center;justify-content:center;font-style:normal}
+.astep-dot--active{background:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.3);animation:dotPulse 1s ease-in-out infinite}
+.astep-dot--done{background:#22c55e;font-size:.65rem;width:16px;height:16px;color:#fff}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 3px rgba(99,102,241,.3)}50%{box-shadow:0 0 0 6px rgba(99,102,241,.15)}}
+.analysing-note{font-size:.73rem;color:var(--text-muted,#94a3b8);opacity:.65;margin:0}
+</style>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - MedAI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-sub">Welcome, <strong>{{ current_user.name }}</strong> · {{ current_user.role.capitalize() }}</p>
+  </div>
+  <a href="{{ url_for('main.upload') }}" class="btn btn-primary">+ Upload Scan</a>
+  <a href="{{ url_for('lab.lab_upload') }}" class="btn btn-outline">Lab Analysis</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon">&#x1F4C2;</div>
+    <div class="stat-value">{{ stats.total }}</div>
+    <div class="stat-label">Total scan</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">&#x1F52C;</div>
+    <div class="stat-value">{{ stats.analyzed }}</div>
+    <div class="stat-label">Analyzed</div>
+  </div>
+  <div class="stat-card stat-card--alert">
+    <div class="stat-icon">&#x1F6A8;</div>
+    <div class="stat-value">{{ stats.high_priority }}</div>
+    <div class="stat-label">High Priority</div>
+  </div>
+</div>
+
+{% if not uploads %}
+<div class="empty-state">
+  <div class="empty-icon">&#x1FA7B;</div>
+  <h3>No scans yet</h3>
+  <p>Upload your first MRI, CT or X-ray scan to get an AI analysis.</p>
+  <a href="{{ url_for('main.upload') }}" class="btn btn-primary">Upload First Scan</a>
+</div>
+{% else %}
+
+<section>
+  <div class="section-header">
+    <h2>Recent Scans</h2>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <span class="link-muted" id="pageInfo"></span>
+      <a href="{{ url_for('main.history') }}" class="link-muted">View all &#x2192;</a>
+    </div>
+  </div>
+
+  <!-- All cards, hidden by default, shown via JS -->
+  <div class="scan-grid" id="scanGrid">
+    {% for up in uploads %}
+    <div class="scan-card scan-item
+      {% if up.prediction and up.prediction.priority == 'HIGH' %}scan-card--high
+      {% elif up.prediction and up.prediction.priority == 'MEDIUM' %}scan-card--medium{% endif %}"
+      style="display:none;">
+      <div class="scan-thumb">
+        {% if up.file_type in ['png', 'jpg', 'jpeg'] %}
+          <img src="{{ url_for('static', filename='') }}../app/uploads/{{ current_user.id }}/{{ up.filename }}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+               alt="Scan preview"/>
+        {% endif %}
+        <div class="thumb-placeholder">&#x1FA7B;</div>
+      </div>
+      <div class="scan-info">
+        <p class="scan-name">{{ up.original_name or up.filename }}</p>
+        <p class="scan-meta">{{ up.modality }} · {{ up.upload_date.strftime('%b %d, %Y') }}</p>
+        {% if up.prediction %}
+          <div class="scan-result">
+            <span class="priority-badge priority-{{ up.prediction.priority.lower() }}">{{ up.prediction.priority }}</span>
+            <span class="result-label">{{ up.prediction.result_label }}</span>
+            <span class="result-conf">{{ "%.0f"|format(up.prediction.confidence_score * 100) }}%</span>
+          </div>
+        {% else %}
+          <span class="badge-pending">Pending</span>
+        {% endif %}
+      </div>
+      <div class="scan-actions">
+        {% if up.prediction %}
+          <a href="{{ url_for('main.result', upload_id=up.id) }}" class="btn btn-sm btn-outline">View Results</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination controls -->
+  <div class="pagination" id="pagination"></div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var ITEMS_PER_PAGE = 12;
+  var currentPage = 1;
+
+  var items = Array.from(document.querySelectorAll('.scan-item'));
+  var totalItems = items.length;
+  var totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  function showPage(page) {
+    currentPage = page;
+    var start = (page - 1) * ITEMS_PER_PAGE;
+    var end   = start + ITEMS_PER_PAGE;
+
+    items.forEach(function (item, i) {
+      item.style.display = (i >= start && i < end) ? '' : 'none';
+    });
+
+    // page info
+    var pageInfo = document.getElementById('pageInfo');
+    if (pageInfo) {
+      if (totalPages > 1) {
+        pageInfo.textContent = 'Page ' + page + ' of ' + totalPages;
+      } else {
+        pageInfo.textContent = totalItems + ' scan' + (totalItems !== 1 ? 's' : '');
+      }
+    }
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    var container = document.getElementById('pagination');
+    if (!container || totalPages <= 1) return;
+
+    var html = '';
+
+    // Prev button
+    html += '<button class="pg-btn" onclick="goPage(' + (currentPage - 1) + ')"' +
+            (currentPage === 1 ? ' disabled' : '') + '>&#x2190; Prev</button>';
+
+    // Page number buttons
+    for (var i = 1; i <= totalPages; i++) {
+      html += '<button class="pg-btn' + (i === currentPage ? ' pg-btn--active' : '') +
+              '" onclick="goPage(' + i + ')">' + i + '</button>';
+    }
+
+    // Next button
+    html += '<button class="pg-btn" onclick="goPage(' + (currentPage + 1) + ')"' +
+            (currentPage === totalPages ? ' disabled' : '') + '>Next &#x2192;</button>';
+
+    container.innerHTML = html;
+  }
+
+  window.goPage = function (page) {
+    if (page < 1 || page > totalPages) return;
+    showPage(page);
+    // scroll to top of scan grid smoothly
+    var grid = document.getElementById('scanGrid');
+    if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Init
+  if (items.length > 0) showPage(1);
+})();
+</script>
+
+<style>
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .5rem;
+  margin-top: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+.pg-btn {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 .85rem;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.04);
+  color: #94a3b8;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+
+.pg-btn:hover:not(:disabled) {
+  border-color: rgba(99,102,241,.5);
+  background: rgba(99,102,241,.1);
+  color: #a5b4fc;
+}
+
+.pg-btn--active {
+  border-color: #6366f1;
+  background: rgba(99,102,241,.2);
+  color: #c7d2fe;
+  font-weight: 700;
+}
+
+.pg-btn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .page-header { flex-wrap: wrap; gap: .5rem; }
+  .page-header .btn { flex: 1; text-align: center; font-size: .8rem; padding: .5rem .75rem; }
+  .pg-btn { min-width: 36px; height: 36px; font-size: .78rem; }
+}
+</style>
+{% endblock %}

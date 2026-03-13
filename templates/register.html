@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Register – MedAI{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">⬡</div>
+      <h1>Create Account</h1>
+      <p class="auth-subtitle">Join MedAI – Medical Analysis Platform</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.register') }}" class="auth-form">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required autofocus
+               value="{{ name or '' }}" placeholder="Dr. Jane Smith"/>
+      </div>
+      <div class="form-group">
+        <label for="email">Institutional Email</label>
+        <input type="email" id="email" name="email" required
+               value="{{ email or '' }}" placeholder="doctor@hospital.org"/>
+      </div>
+      <div class="form-group">
+        <label for="role">Role</label>
+        <select id="role" name="role">
+          <option value="clinician">Clinician</option>
+          <option value="radiologist">Radiologist</option>
+          <option value="researcher">Researcher</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="password">Password <small>(min. 8 characters)</small></label>
+        <input type="password" id="password" name="password" required
+               placeholder="••••••••" minlength="8"/>
+      </div>
+      <div class="form-group">
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" required
+               placeholder="••••••••"/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">
+        Create Account <span>→</span>
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Already registered? <a href="{{ url_for('auth.login') }}">Sign In</a>
+    </p>
+  </div>
+
+  <div class="auth-info">
+    <div class="info-badge">SECURE</div>
+    <h2>Your data.<br/>Your control.</h2>
+    <ul class="feature-list">
+      <li>🔒 Bcrypt password hashing</li>
+      <li>📁 Isolated per-user storage</li>
+      <li>🏥 Role-based access</li>
+      <li>📋 Full audit history</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

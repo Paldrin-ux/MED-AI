@@ -1,0 +1,349 @@
+﻿{% extends "base.html" %}
+{% block title %}Lab Analysis - {{ record.patient_name }} - MedAI{% endblock %}
+
+{% block head %}
+<style>
+.lab-result-page{max-width:900px;margin:0 auto;padding:1.5rem 1rem 4rem}
+.lab-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
+.lab-page-header-left h1{font-size:1.6rem;font-weight:700;color:#f1f5f9;margin:0 0 .25rem}
+.lab-page-header-left p{font-size:.82rem;color:#64748b;margin:0}
+.lab-header-actions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+.urgency-banner{border-radius:12px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem;font-size:.92rem;font-weight:600}
+.urgency-banner--routine{background:rgba(16,185,129,.1);border:1.5px solid rgba(16,185,129,.3);color:#6ee7b7}
+.urgency-banner--soon{background:rgba(251,191,36,.1);border:1.5px solid rgba(251,191,36,.3);color:#fde68a}
+.urgency-banner--urgent{background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);color:#fca5a5}
+.urgency-banner--emergency{background:rgba(239,68,68,.18);border:2px solid rgba(239,68,68,.6);color:#fca5a5;animation:pulse-border 1.5s ease-in-out infinite}
+@keyframes pulse-border{0%,100%{border-color:rgba(239,68,68,.6)}50%{border-color:rgba(239,68,68,1)}}
+.urgency-icon{font-size:1.4rem;flex-shrink:0}
+.urgency-text strong{display:block;font-size:1rem}
+.urgency-text span{font-size:.8rem;font-weight:400;opacity:.85}
+.lab-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem}
+@media(max-width:640px){.lab-layout{grid-template-columns:1fr}}
+.lab-card{background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
+.lab-card-header{display:flex;align-items:center;gap:.6rem;padding:.9rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
+.lab-card-header-icon{font-size:1rem}
+.lab-card-header h3{font-size:.85rem;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin:0}
+.lab-card-body{padding:1.1rem 1.25rem}
+.patient-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.patient-info-label{font-size:.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem}
+.patient-info-value{font-size:.88rem;font-weight:600;color:#e2e8f0}
+.lab-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+@media(max-width:480px){.lab-stats-row{grid-template-columns:1fr}}
+.lab-stat-card{border-radius:14px;padding:1.1rem 1rem;text-align:center;border:1.5px solid}
+.lab-stat-card--normal{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25)}
+.lab-stat-card--abnormal{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.25)}
+.lab-stat-card--critical{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25)}
+.lab-stat-val{font-size:2.2rem;font-weight:700;line-height:1;margin-bottom:.3rem}
+.lab-stat-card--normal .lab-stat-val{color:#34d399}
+.lab-stat-card--abnormal .lab-stat-val{color:#fbbf24}
+.lab-stat-card--critical .lab-stat-val{color:#f87171}
+.lab-stat-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.lab-stat-card--normal .lab-stat-label{color:#6ee7b7}
+.lab-stat-card--abnormal .lab-stat-label{color:#fde68a}
+.lab-stat-card--critical .lab-stat-label{color:#fca5a5}
+.summary-section{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.04));border:1.5px solid rgba(99,102,241,.25);border-radius:16px;padding:1.25rem 1.4rem;margin-bottom:1.5rem}
+.summary-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem}
+.summary-header h3{font-size:.85rem;font-weight:700;color:#a5b4fc;letter-spacing:.06em;text-transform:uppercase;margin:0}
+.summary-text{font-size:.95rem;line-height:1.8;color:#c7d2fe}
+.test-results-section{margin-bottom:1.5rem}
+.test-results-section h3{font-size:.85rem;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin:0 0 .9rem;display:flex;align-items:center;gap:.5rem}
+.results-table{width:100%;border-collapse:separate;border-spacing:0 .4rem}
+.results-table thead th{font-size:.7rem;font-weight:700;color:#64748b;letter-spacing:.08em;text-transform:uppercase;padding:.4rem .75rem;text-align:left}
+.results-table tbody tr{background:rgba(255,255,255,.025);border-radius:10px;transition:background .15s}
+.results-table tbody tr:hover{background:rgba(255,255,255,.05)}
+.results-table tbody td{padding:.7rem .75rem;font-size:.85rem;vertical-align:middle}
+.results-table tbody td:first-child{border-radius:10px 0 0 10px}
+.results-table tbody td:last-child{border-radius:0 10px 10px 0}
+.test-name{font-weight:600;color:#e2e8f0}
+.test-value{font-weight:700;font-family:'Space Mono',monospace;font-size:.9rem}
+.test-value--normal{color:#34d399}
+.test-value--low{color:#fbbf24}
+.test-value--high{color:#fb923c}
+.test-value--critical{color:#f87171}
+.test-ref{font-size:.78rem;color:#64748b;font-family:'Space Mono',monospace}
+.status-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.7rem;font-weight:700;letter-spacing:.05em;padding:.2rem .55rem;border-radius:20px;white-space:nowrap}
+.status-badge--normal{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.status-badge--low{background:rgba(251,191,36,.15);color:#fde68a;border:1px solid rgba(251,191,36,.3)}
+.status-badge--high{background:rgba(251,146,60,.15);color:#fdba74;border:1px solid rgba(251,146,60,.3)}
+.status-badge--critical{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.significance-text{font-size:.78rem;color:#94a3b8;line-height:1.4}
+.lab-full-section{border-radius:16px;padding:1.25rem 1.4rem;margin-bottom:1.25rem;border:1.5px solid}
+.lab-full-section.concerns{background:linear-gradient(135deg,rgba(239,68,68,.07),rgba(220,38,38,.03));border-color:rgba(239,68,68,.2)}
+.lab-full-section.interpretation{background:linear-gradient(135deg,rgba(14,165,233,.07),rgba(2,132,199,.03));border-color:rgba(14,165,233,.2)}
+.lab-full-section.next-steps{background:linear-gradient(135deg,rgba(16,185,129,.07),rgba(5,150,105,.03));border-color:rgba(16,185,129,.2)}
+.lab-section-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem}
+.lab-section-header h3{font-size:.85rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0}
+.concerns .lab-section-header h3{color:#fca5a5}
+.interpretation .lab-section-header h3{color:#7dd3fc}
+.next-steps .lab-section-header h3{color:#6ee7b7}
+.lab-section-body{font-size:.9rem;line-height:1.8}
+.concerns .lab-section-body{color:#fecdd3}
+.interpretation .lab-section-body{color:#bae6fd}
+.next-steps .lab-section-body{color:#d1fae5}
+.concerns-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.6rem}
+.concerns-list li{display:flex;gap:.75rem;align-items:flex-start}
+.concern-num{width:22px;height:22px;border-radius:50%;background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.15rem}
+.lab-meta-footer{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;padding:1rem 1.25rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:1.25rem}
+.lab-meta-item{font-size:.75rem}
+.lab-meta-item .meta-key{color:#64748b;margin-right:.4rem}
+.lab-meta-item .meta-val{color:#94a3b8;font-weight:600}
+.lab-disclaimer{padding:.9rem 1.1rem;background:rgba(148,163,184,.05);border-left:3px solid rgba(148,163,184,.3);border-radius:0 8px 8px 0;font-size:.76rem;color:#94a3b8;line-height:1.7;margin-bottom:1.5rem}
+.lab-actions{display:flex;gap:.75rem;flex-wrap:wrap}
+.no-findings-note{text-align:center;padding:2rem;color:#64748b;font-size:.85rem}
+@media print{.navbar,.lab-header-actions .btn,footer,.lab-page-header a{display:none!important}body{background:white!important;color:#111!important}.lab-card,.summary-section,.lab-full-section,.urgency-banner{border:1px solid #ccc!important;background:#f9f9f9!important}.patient-info-value,.summary-text,.test-name,.lab-section-body{color:#111!important}.test-value--normal,.test-value--low,.test-value--high,.test-value--critical{color:#333!important}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.anim-1{animation:fadeUp .45s ease both}
+.anim-2{animation:fadeUp .45s .08s ease both}
+.anim-3{animation:fadeUp .45s .16s ease both}
+.anim-4{animation:fadeUp .45s .24s ease both}
+.anim-5{animation:fadeUp .45s .32s ease both}
+.anim-6{animation:fadeUp .45s .40s ease both}
+.anim-7{animation:fadeUp .45s .48s ease both}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lab-result-page">
+
+  <div class="lab-page-header anim-1">
+    <div class="lab-page-header-left">
+      <h1>&#x1F9EA; Lab Results Analysis</h1>
+      <p>{{ record.original_filename }} &middot; Analyzed {{ record.analysis_date.strftime('%Y-%m-%d %H:%M') }}</p>
+    </div>
+    <div class="lab-header-actions">
+      <a href="{{ url_for('lab.lab_upload') }}" class="btn btn-outline">+ New Analysis</a>
+      <a href="{{ url_for('lab.lab_history') }}" class="btn btn-ghost">&#x2190; Lab History</a>
+      <button onclick="window.print()" class="btn btn-ghost">Print</button>
+    </div>
+  </div>
+
+  {% set urgency_lower = record.urgency.lower() %}
+  <div class="urgency-banner urgency-banner--{{ urgency_lower }} anim-1">
+    <span class="urgency-icon">
+      {% if record.urgency == 'EMERGENCY' %}&#x1F6A8;
+      {% elif record.urgency == 'URGENT' %}&#x26A0;&#xFE0F;
+      {% elif record.urgency == 'SOON' %}&#x1F514;
+      {% else %}&#x2705;{% endif %}
+    </span>
+    <div class="urgency-text">
+      <strong>{{ record.urgency }} -
+        {% if record.urgency == 'EMERGENCY' %}Seek immediate medical attention
+        {% elif record.urgency == 'URGENT' %}Consult your doctor within 24-48 hours
+        {% elif record.urgency == 'SOON' %}Schedule an appointment within 1 week
+        {% else %}No urgent action required - follow up at your next visit{% endif %}
+      </strong>
+      <span>Based on AI analysis of the uploaded lab report</span>
+    </div>
+  </div>
+
+  <div class="lab-stats-row anim-2">
+    <div class="lab-stat-card lab-stat-card--normal">
+      <div class="lab-stat-val">{{ record.normal_count }}</div>
+      <div class="lab-stat-label">Normal Values</div>
+    </div>
+    <div class="lab-stat-card lab-stat-card--abnormal">
+      <div class="lab-stat-val">{{ record.abnormal_count }}</div>
+      <div class="lab-stat-label">Abnormal Values</div>
+    </div>
+    <div class="lab-stat-card lab-stat-card--critical">
+      <div class="lab-stat-val">{{ record.critical_count }}</div>
+      <div class="lab-stat-label">Critical Values</div>
+    </div>
+  </div>
+
+  <div class="lab-layout anim-3">
+    <div class="lab-card">
+      <div class="lab-card-header">
+        <span class="lab-card-header-icon">&#x1F464;</span>
+        <h3>Patient Information</h3>
+      </div>
+      <div class="lab-card-body">
+        <div class="patient-info-grid">
+          <div class="patient-info-item">
+            <div class="patient-info-label">Full Name</div>
+            <div class="patient-info-value">{{ record.patient_name }}</div>
+          </div>
+          <div class="patient-info-item">
+            <div class="patient-info-label">Age</div>
+            <div class="patient-info-value">{{ record.patient_age }}</div>
+          </div>
+          <div class="patient-info-item">
+            <div class="patient-info-label">Patient ID</div>
+            <div class="patient-info-value">{{ record.patient_id_ref }}</div>
+          </div>
+          <div class="patient-info-item">
+            <div class="patient-info-label">Test Date</div>
+            <div class="patient-info-value">{{ record.test_date }}</div>
+          </div>
+          <div class="patient-info-item">
+            <div class="patient-info-label">Ordering Physician</div>
+            <div class="patient-info-value">{{ record.ordering_physician }}</div>
+          </div>
+          <div class="patient-info-item">
+            <div class="patient-info-label">Facility</div>
+            <div class="patient-info-value">{{ record.facility }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lab-card">
+      <div class="lab-card-header">
+        <span class="lab-card-header-icon">&#x1F916;</span>
+        <h3>Analysis Engine</h3>
+      </div>
+      <div class="lab-card-body">
+        <div class="patient-info-grid">
+          <div class="patient-info-item">
+            <div class="patient-info-label">AI Model</div>
+            <div class="patient-info-value">{{ record.model_used }}</div>
+          </div>
+          <div class="patient-info-item">
+            <div class="patient-info-label">Analyzed At</div>
+            <div class="patient-info-value">{{ record.analysis_date.strftime('%Y-%m-%d %H:%M') }}</div>
+          </div>
+          <div class="patient-info-item">
+            <div class="patient-info-label">Source File</div>
+            <div class="patient-info-value" style="font-size:.75rem;word-break:break-all">{{ record.original_filename }}</div>
+          </div>
+          <div class="patient-info-item">
+            <div class="patient-info-label">Priority Level</div>
+            <div class="patient-info-value">
+              <span style="{% if record.urgency in ('EMERGENCY','URGENT') %}color:#f87171{% elif record.urgency == 'SOON' %}color:#fbbf24{% else %}color:#34d399{% endif %}">{{ record.urgency }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if record.summary %}
+  <div class="summary-section anim-4">
+    <div class="summary-header">
+      <span>&#x1F4CA;</span>
+      <h3>Summary of Findings</h3>
+    </div>
+    <div class="summary-text">{{ record.summary }}</div>
+  </div>
+  {% endif %}
+
+  {% if findings %}
+  <div class="test-results-section anim-5">
+    <h3>&#x1F4CB; Individual Test Results</h3>
+    <div class="lab-card" style="overflow-x:auto;">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Test Name</th>
+            <th>Result</th>
+            <th>Reference Range</th>
+            <th>Status</th>
+            <th>Clinical Significance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in findings %}
+          {% set status_lower = f.status | lower %}
+          <tr>
+            <td><span class="test-name">{{ f.test_name }}</span></td>
+            <td>
+              <span class="test-value test-value--{{ status_lower }}">
+                {{ f.value }}{% if f.unit %} <small style="font-weight:400;color:#64748b">{{ f.unit }}</small>{% endif %}
+              </span>
+            </td>
+            <td><span class="test-ref">{{ f.reference_range }}</span></td>
+            <td>
+              <span class="status-badge status-badge--{{ status_lower }}">
+                {% if status_lower == 'normal' %}&#x2713;{% elif status_lower == 'critical' %}&#x1F6A8;{% elif status_lower == 'low' %}&#x2193;{% else %}&#x2191;{% endif %}
+                {{ f.status }}
+              </span>
+            </td>
+            <td><span class="significance-text">{{ f.clinical_significance }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="lab-card anim-5" style="margin-bottom:1.5rem;">
+    <div class="no-findings-note">
+      <p>&#x1F4CB; Individual test values could not be parsed into a structured table.</p>
+      <p style="margin-top:.4rem;">See the interpretation section below for the full analysis.</p>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if record.key_concerns %}
+  <div class="lab-full-section concerns anim-5">
+    <div class="lab-section-header">
+      <span>&#x1F534;</span>
+      <h3>Key Concerns</h3>
+    </div>
+    <div class="lab-section-body">
+      {% set concerns_text = record.key_concerns %}
+      {% if '1.' in concerns_text or '1)' in concerns_text %}
+        <ul class="concerns-list">
+          {% for line in concerns_text.split('\n') %}
+            {% set stripped = line.strip() %}
+            {% if stripped and stripped[0].isdigit() %}
+              <li>
+                <span class="concern-num">{{ loop.index }}</span>
+                <span>{{ stripped.lstrip('0123456789.)- ') }}</span>
+              </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      {% else %}
+        {{ concerns_text }}
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if record.interpretation %}
+  <div class="lab-full-section interpretation anim-6">
+    <div class="lab-section-header">
+      <span>&#x1F52C;</span>
+      <h3>Clinical Interpretation</h3>
+    </div>
+    <div class="lab-section-body">{{ record.interpretation }}</div>
+  </div>
+  {% endif %}
+
+  {% if record.next_steps %}
+  <div class="lab-full-section next-steps anim-6">
+    <div class="lab-section-header">
+      <span>&#x2695;</span>
+      <h3>Recommended Next Steps</h3>
+    </div>
+    <div class="lab-section-body">{{ record.next_steps }}</div>
+  </div>
+  {% endif %}
+
+  <div class="lab-meta-footer anim-7">
+    <div class="lab-meta-item"><span class="meta-key">File:</span><span class="meta-val">{{ record.original_filename }}</span></div>
+    <div class="lab-meta-item"><span class="meta-key">Analyzed:</span><span class="meta-val">{{ record.analysis_date.strftime('%Y-%m-%d %H:%M') }}</span></div>
+    <div class="lab-meta-item"><span class="meta-key">Engine:</span><span class="meta-val">Gemini Vision AI ({{ record.model_used }})</span></div>
+    <div class="lab-meta-item"><span class="meta-key">Urgency:</span><span class="meta-val">{{ record.urgency }}</span></div>
+    <div class="lab-meta-item"><span class="meta-key">Record ID:</span><span class="meta-val">#{{ record.id }}</span></div>
+  </div>
+
+  <div class="lab-disclaimer anim-7">
+    &#x26A0; {{ record.disclaimer if record.disclaimer else "This analysis is for informational purposes only and does not constitute a medical diagnosis. Please consult your physician to interpret these results in the context of your overall health." }}
+  </div>
+
+  <div class="lab-actions anim-7">
+    <a href="{{ url_for('lab.lab_upload') }}" class="btn btn-primary">+ New Analysis</a>
+    <a href="{{ url_for('lab.lab_history') }}" class="btn btn-outline">Lab History</a>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Dashboard</a>
+    <button onclick="window.print()" class="btn btn-ghost">&#x1F5A8; Print Report</button>
+    <form method="POST" action="{{ url_for('lab.lab_delete', result_id=record.id) }}"
+          onsubmit="return confirm('Delete this lab result? This cannot be undone.')"
+          style="display:inline;">
+      <button type="submit" class="btn btn-ghost" style="color:#fca5a5;border-color:rgba(239,68,68,.3);">Delete</button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
