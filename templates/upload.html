@@ -102,7 +102,13 @@
       <!-- STEP 2 -->
       <div class="step-indicator step-indicator--2">
         <span class="step-num">2</span>
-        <span class="step-label">Upload Your Scan</span>
+        <span class="step-label">Upload Your Scan or..</span>
+      </div>
+      <div class="camera-section">
+        <button type="button" id="cameraBtn" class="btn btn-ghost btn-sm">&#x1F4F7; Capture from Camera</button>
+        <video id="cameraVideo" class="hidden" autoplay playsinline></video>
+        <canvas id="cameraCanvas" class="hidden"></canvas>
+        <button type="button" id="captureBtn" class="btn btn-sm btn-primary hidden">Take Photo</button>
       </div>
 
       <div id="dropZone" class="drop-zone" style="cursor:pointer;">
@@ -136,13 +142,6 @@
           <div id="progressFill" class="progress-bar-fill" style="width:0%"></div>
         </div>
         <span id="progressLabel" class="progress-label">Analysing with Gemini Vision AI&#x2026;</span>
-      </div>
-
-      <div class="camera-section">
-        <button type="button" id="cameraBtn" class="btn btn-ghost btn-sm">&#x1F4F7; Capture from Camera</button>
-        <video id="cameraVideo" class="hidden" autoplay playsinline></video>
-        <canvas id="cameraCanvas" class="hidden"></canvas>
-        <button type="button" id="captureBtn" class="btn btn-sm btn-primary hidden">Take Photo</button>
       </div>
 
       <!-- STEP 3 -->

@@ -8,6 +8,7 @@ from app.ai.predict import run_inference
 from app.ai.tcia_service import get_tcia_reference_cases, is_tcia_available
 import uuid
 from datetime import datetime
+from app.ai.references import get_references
 
 main_bp = Blueprint("main", __name__)
 
@@ -194,11 +195,14 @@ def result(upload_id):
             current_app.logger.warning(f"TCIA lookup failed (non-critical): {exc}")
             tcia_data = None
 
+    clinical_refs = get_references(prediction.result_label, max_refs=4) if prediction else []
+
     return render_template(
         "result.html",
         upload=upload_record,
         prediction=prediction,
         tcia_data=tcia_data,
+        clinical_refs=clinical_refs,
     )
 
 

@@ -1,5 +1,5 @@
 import os
-os.environ["GEMINI_API_KEY"] = "AIzaSyBc8g7XY2lmXgzc6_yRt_LrWAby2YMAG2Q"
+os.environ["GEMINI_API_KEY"] = "AIzaSyB7fcPAIh86AtzENSmnkJLiR6KWGKgS1gA"
 from app import create_app
 from dotenv import load_dotenv
 load_dotenv()
