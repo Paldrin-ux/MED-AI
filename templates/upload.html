@@ -125,10 +125,23 @@
         <p class="drop-sub">or click to browse &mdash; PNG · JPG · DICOM · NIfTI</p>
       </div>
 
+      <!-- ── CONSENT BAR WITH CHECKBOX (FIXED) ── -->
       <div class="consent-bar" id="consentBar">
-        <span class="consent-icon">&#x1F6E1;&#xFE0F;</span>
+        <label class="consent-checkbox-label" for="consentCheckbox">
+          <input
+            type="checkbox"
+            id="consentCheckbox"
+            name="consent"
+            class="consent-checkbox"
+          />
+          <span class="consent-custom-box" aria-hidden="true">
+            <svg class="consent-check-icon" viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 5L4.5 8.5L11 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </label>
         <span class="consent-text">
-          By using this Medical AI Analysis System, you agree to the
+          By using this Medical AI Analysis System, I agree to the
           <a href="#" class="consent-link" id="termsLink">Terms of Agreement</a>.
           The system will analyze uploaded medical images to assist in detecting possible conditions.
           Results are for informational purposes only and should not replace professional medical consultation.
@@ -270,7 +283,7 @@
     </div>
 
     <div class="terms-modal__footer">
-      <button type="button" class="btn btn-primary" onclick="closeTermsModal()">&#x2705; Got it &mdash; Close</button>
+      <button type="button" class="btn btn-primary" onclick="acceptTermsFromModal()">&#x2705; I Agree &mdash; Close</button>
     </div>
 
   </div>
@@ -322,17 +335,55 @@
   var dropZone     = document.getElementById('dropZone');
   var submitBtn    = document.getElementById('submitBtn');
   var uploadForm   = document.getElementById('uploadForm');
+  var consentBox   = document.getElementById('consentCheckbox');
   var _realClick   = fileInput.click.bind(fileInput);
 
   /* ── Terms modal ── */
   window.closeTermsModal = function () {
     document.getElementById('termsOverlay').style.display = 'none';
   };
+
+  /* Clicking "I Agree" inside the modal also checks the consent box */
+  window.acceptTermsFromModal = function () {
+    if (consentBox) {
+      consentBox.checked = true;
+      updateConsentBarState();
+      checkSubmitReady();
+    }
+    closeTermsModal();
+  };
+
   var termsLink = document.getElementById('termsLink');
   if (termsLink) {
     termsLink.addEventListener('click', function (e) {
       e.preventDefault();
       document.getElementById('termsOverlay').style.display = 'flex';
+    });
+  }
+
+  /* Close modal when clicking the backdrop */
+  var termsOverlay = document.getElementById('termsOverlay');
+  if (termsOverlay) {
+    termsOverlay.addEventListener('click', function (e) {
+      if (e.target === termsOverlay) closeTermsModal();
+    });
+  }
+
+  /* ── Consent checkbox ── */
+  function updateConsentBarState() {
+    var bar = document.getElementById('consentBar');
+    if (!bar || !consentBox) return;
+    if (consentBox.checked) {
+      bar.classList.add('consent-bar--checked');
+    } else {
+      bar.classList.remove('consent-bar--checked');
+    }
+  }
+
+  if (consentBox) {
+    consentBox.addEventListener('change', function () {
+      updateConsentBarState();
+      checkSubmitReady();
     });
   }
 
@@ -367,7 +418,6 @@
     mobileCameraBtn.addEventListener('click', function () {
       cameraInput.click();
     });
-    /* When user takes a photo, copy it into the main fileInput */
     cameraInput.addEventListener('change', function () {
       if (!this.files.length) return;
       var dt = new DataTransfer();
@@ -408,7 +458,6 @@
         dt.items.add(file);
         fileInput.files = dt.files;
         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-        /* Stop the stream */
         if (video.srcObject) {
           video.srcObject.getTracks().forEach(function (t) { t.stop(); });
           video.srcObject = null;
@@ -428,7 +477,7 @@
     });
   });
 
-  /* ── File change handler (shared by fileInput and cameraInput→fileInput) ── */
+  /* ── File change handler ── */
   if (fileInput) {
     fileInput.addEventListener('change', function () {
       checkSubmitReady();
@@ -462,10 +511,12 @@
     });
   }
 
+  /* ── Submit guard: modality + file + consent all required ── */
   function checkSubmitReady() {
     var modalityOk = !!document.querySelector('.modality-card input[type=radio]:checked');
     var fileOk     = fileInput && fileInput.files.length > 0;
-    if (submitBtn) submitBtn.disabled = !(modalityOk && fileOk);
+    var consentOk  = consentBox && consentBox.checked;
+    if (submitBtn) submitBtn.disabled = !(modalityOk && fileOk && consentOk);
   }
 
   /* ── Analysing steps animation ── */
@@ -529,10 +580,87 @@
 .step-label{font-size:.88rem;font-weight:700;color:#e2e8f0;letter-spacing:.02em}
 
 /* ── Consent bar ── */
-.consent-bar{display:flex;align-items:flex-start;gap:.65rem;margin:.75rem 0 1rem;padding:.85rem 1rem;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;font-size:.78rem;color:#94a3b8;line-height:1.6}
-.consent-icon{font-size:1rem;flex-shrink:0;margin-top:.1rem}
+.consent-bar{
+  display:flex;
+  align-items:flex-start;
+  gap:.65rem;
+  margin:.75rem 0 1rem;
+  padding:.85rem 1rem;
+  background:rgba(99,102,241,.07);
+  border:1px solid rgba(99,102,241,.2);
+  border-radius:10px;
+  font-size:.78rem;
+  color:#94a3b8;
+  line-height:1.6;
+  transition:background .25s, border-color .25s;
+}
+.consent-bar--checked{
+  background:rgba(34,197,94,.07);
+  border-color:rgba(34,197,94,.3);
+}
 .consent-link{color:#a5b4fc;font-weight:600;text-decoration:none;border-bottom:1px dashed rgba(165,180,252,.4);transition:color .2s,border-color .2s}
 .consent-link:hover{color:#c7d2fe;border-bottom-color:rgba(199,210,254,.7)}
+
+/* ── Consent checkbox label (wraps real input + custom box) ── */
+.consent-checkbox-label{
+  display:flex;
+  align-items:center;
+  flex-shrink:0;
+  cursor:pointer;
+  margin-top:.1rem;       /* align with first line of text */
+  user-select:none;
+}
+
+/* Hide the native checkbox but keep it accessible */
+.consent-checkbox{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+  margin:0;
+}
+
+/* Custom styled checkbox box */
+.consent-custom-box{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;
+  height:18px;
+  min-width:18px;
+  border-radius:5px;
+  border:1.5px solid rgba(165,180,252,.45);
+  background:rgba(99,102,241,.08);
+  transition:background .2s, border-color .2s, box-shadow .2s;
+  color:transparent;      /* check icon hidden by default */
+}
+
+/* Hover state */
+.consent-checkbox-label:hover .consent-custom-box{
+  border-color:rgba(165,180,252,.8);
+  background:rgba(99,102,241,.15);
+}
+
+/* Checked state */
+.consent-checkbox:checked + .consent-custom-box{
+  background:#6366f1;
+  border-color:#6366f1;
+  box-shadow:0 0 0 3px rgba(99,102,241,.25);
+  color:#fff;             /* reveal check icon */
+}
+
+/* Focus-visible ring for keyboard users */
+.consent-checkbox:focus-visible + .consent-custom-box{
+  outline:2px solid #a5b4fc;
+  outline-offset:2px;
+}
+
+.consent-check-icon{
+  width:10px;
+  height:10px;
+  flex-shrink:0;
+}
 
 /* ── Modality grid ── */
 .modality-section{margin-bottom:.5rem}
