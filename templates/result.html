@@ -117,28 +117,12 @@
 
     <!-- Scan Info -->
     <div class="scan-info-panel">
-      <div class="scan-info-row">
-        <span class="scan-info-label">Modality</span>
-        <span class="scan-info-value">{{ upload.modality }}</span>
-      </div>
-      <div class="scan-info-row">
-        <span class="scan-info-label">Analyzed</span>
-        <span class="scan-info-value">{{ prediction.analysis_date.strftime('%b %d, %Y %H:%M') }}</span>
-      </div>
-      <div class="scan-info-row">
-        <span class="scan-info-label">File Type</span>
-        <span class="scan-info-value">{{ upload.file_type.upper() }}</span>
-      </div>
-      <div class="scan-info-row">
-        <span class="scan-info-label">Scan ID</span>
-        <span class="scan-info-value">#{{ upload.id }}</span>
-      </div>
-      <div class="scan-info-row">
-        <span class="scan-info-label">AI Engine</span>
-        <span class="scan-info-value">Gemini Vision v2.2</span>
-      </div>
+      <div class="scan-info-row"><span class="scan-info-label">Modality</span><span class="scan-info-value">{{ upload.modality }}</span></div>
+      <div class="scan-info-row"><span class="scan-info-label">Analyzed</span><span class="scan-info-value">{{ prediction.analysis_date.strftime('%b %d, %Y %H:%M') }}</span></div>
+      <div class="scan-info-row"><span class="scan-info-label">File Type</span><span class="scan-info-value">{{ upload.file_type.upper() }}</span></div>
+      <div class="scan-info-row"><span class="scan-info-label">Scan ID</span><span class="scan-info-value">#{{ upload.id }}</span></div>
+      <div class="scan-info-row"><span class="scan-info-label">AI Engine</span><span class="scan-info-value">Gemini Vision v2.2</span></div>
     </div>
-
   </div>
 
   <!-- ── RIGHT COLUMN: Results ── -->
@@ -146,17 +130,11 @@
 
     <!-- 1. Priority Banner -->
     <div class="priority-banner priority-banner--{{ prediction.priority.lower() }}">
-      {% if prediction.priority == 'HIGH' %}🚨
-      {% elif prediction.priority == 'MEDIUM' %}⚠️
-      {% else %}✅{% endif %}
+      {% if prediction.priority == 'HIGH' %}🚨{% elif prediction.priority == 'MEDIUM' %}⚠️{% else %}✅{% endif %}
       Priority: <strong>{{ prediction.priority }}</strong>
-      {% if prediction.priority == 'HIGH' %}
-        <span class="priority-action">— Urgent radiologist review required</span>
-      {% elif prediction.priority == 'MEDIUM' %}
-        <span class="priority-action">— Follow-up imaging recommended</span>
-      {% else %}
-        <span class="priority-action">— No urgent action required</span>
-      {% endif %}
+      {% if prediction.priority == 'HIGH' %}<span class="priority-action">— Urgent radiologist review required</span>
+      {% elif prediction.priority == 'MEDIUM' %}<span class="priority-action">— Follow-up imaging recommended</span>
+      {% else %}<span class="priority-action">— No urgent action required</span>{% endif %}
     </div>
 
     <!-- 2. Rule Correction Alert -->
@@ -173,28 +151,19 @@
     <!-- 3. Main Diagnosis Card -->
     <div class="cancer-card cancer-card--{{ prediction.priority.lower() }}">
       <div class="cancer-card-header">
-        <span class="cancer-icon">
-          {% if prediction.priority == 'HIGH' %}🔴
-          {% elif prediction.priority == 'MEDIUM' %}🟡
-          {% else %}🟢{% endif %}
-        </span>
+        <span class="cancer-icon">{% if prediction.priority == 'HIGH' %}🔴{% elif prediction.priority == 'MEDIUM' %}🟡{% else %}🟢{% endif %}</span>
         <div>
           <div class="cancer-diagnosis">{{ prediction.result_label }}</div>
           <div class="cancer-engine-tag">Gemini Vision AI · gemini-2.5-flash</div>
         </div>
       </div>
       {% if condition_text and condition_text not in ['None','none','Not analyzed','Unknown',''] %}
-      <div class="cancer-type-row">
-        <span class="cancer-type-label">Condition</span>
-        <span class="cancer-type-value">{{ condition_text }}</span>
-      </div>
+      <div class="cancer-type-row"><span class="cancer-type-label">Condition</span><span class="cancer-type-value">{{ condition_text }}</span></div>
       {% endif %}
       {% if severity_text and severity_text not in ['Not applicable','Unable to determine',''] %}
       <div class="cancer-type-row">
         <span class="cancer-type-label">Severity</span>
-        <span class="cancer-type-value severity-badge severity-{{ severity_text.lower().replace(' ','_') }}">
-          {{ severity_text }}
-        </span>
+        <span class="cancer-type-value severity-badge severity-{{ severity_text.lower().replace(' ','_') }}">{{ severity_text }}</span>
       </div>
       {% endif %}
     </div>
@@ -206,10 +175,7 @@
         <span class="confidence-pct">{{ "%.1f"|format(prediction.confidence_score * 100) }}%</span>
       </div>
       <div class="confidence-track">
-        <div class="confidence-fill
-          {% if prediction.confidence_score >= 0.75 %}conf-high
-          {% elif prediction.confidence_score >= 0.50 %}conf-medium
-          {% else %}conf-low{% endif %}"
+        <div class="confidence-fill {% if prediction.confidence_score >= 0.75 %}conf-high{% elif prediction.confidence_score >= 0.50 %}conf-medium{% else %}conf-low{% endif %}"
           style="width:{{ "%.0f"|format(prediction.confidence_score * 100) }}%"></div>
       </div>
       {% if prediction.confidence_score < 0.60 %}
@@ -222,19 +188,12 @@
     <!-- 5. Clinical Findings -->
     {% if findings_text and 'SIMULATION' not in findings_text and 'Pipeline error' not in findings_text %}
     <div class="findings-section">
-      <div class="findings-header">
-        <span class="findings-icon">📋</span>
-        <h3>Radiological Findings</h3>
-        <span class="findings-badge">AI Report</span>
-      </div>
+      <div class="findings-header"><span class="findings-icon">📋</span><h3>Radiological Findings</h3><span class="findings-badge">AI Report</span></div>
       <div class="findings-body"><p>{{ findings_text }}</p></div>
     </div>
     {% elif findings_text %}
     <div class="findings-section findings-section--warn">
-      <div class="findings-header">
-        <span class="findings-icon">⚠️</span>
-        <h3>System Status</h3>
-      </div>
+      <div class="findings-header"><span class="findings-icon">⚠️</span><h3>System Status</h3></div>
       <div class="findings-body"><p>{{ findings_text }}</p></div>
     </div>
     {% endif %}
@@ -242,11 +201,7 @@
     <!-- 6. Differential Diagnosis -->
     {% if diff_text and diff_text not in ['None','none','Not available',''] and prediction.confidence_score < 0.70 %}
     <div class="differential-section">
-      <div class="diff-header">
-        <span>🔀</span>
-        <h3>Differential Diagnosis</h3>
-        <span class="diff-badge">Confidence &lt; 70%</span>
-      </div>
+      <div class="diff-header"><span>🔀</span><h3>Differential Diagnosis</h3><span class="diff-badge">Confidence &lt; 70%</span></div>
       <div class="diff-body">{{ diff_text }}</div>
     </div>
     {% endif %}
@@ -254,10 +209,7 @@
     <!-- 7. Key Visual Features -->
     {% if expl_text and expl_text not in ['','None','none'] %}
     <div class="explanation-section">
-      <div class="expl-header">
-        <span>🔬</span>
-        <h3>Key Visual Features Analysed</h3>
-      </div>
+      <div class="expl-header"><span>🔬</span><h3>Key Visual Features Analysed</h3></div>
       <div class="expl-body">{{ expl_text }}</div>
     </div>
     {% endif %}
@@ -273,10 +225,7 @@
     <!-- 9. Validation Notes -->
     {% if val_notes %}
     <div class="validation-section">
-      <div class="val-header">
-        <span>🛡</span>
-        <h3>Rule Validator Notes</h3>
-      </div>
+      <div class="val-header"><span>🛡</span><h3>Rule Validator Notes</h3></div>
       <div class="val-body">
         {% for note in val_notes.split(' | ') %}
           {% if note.strip() %}<p>{{ note.strip() }}</p>{% endif %}
@@ -295,7 +244,7 @@
     </div>
     {% endif %}
 
-    <!-- 11. Clinical References (condition-specific) -->
+    <!-- 11. Clinical References -->
     {% if clinical_refs %}
     <div class="refs-section">
       <div class="refs-header">
@@ -308,22 +257,17 @@
       <div class="refs-grid">
         {% for ref in clinical_refs %}
         <a href="{{ ref.url }}" target="_blank" rel="noopener noreferrer" class="ref-card">
-          <span class="ref-source-badge" style="background:{{ ref.color }}22;color:{{ ref.color }};border-color:{{ ref.color }}44">
-            {{ ref.source }}
-          </span>
+          <span class="ref-source-badge" style="background:{{ ref.color }}22;color:{{ ref.color }};border-color:{{ ref.color }}44">{{ ref.source }}</span>
           <span class="ref-title">{{ ref.title }}</span>
           <span class="ref-arrow">→</span>
         </a>
         {% endfor %}
       </div>
-      <div class="refs-footer">
-        All references link to publicly available clinical resources.
-        This AI system does not endorse any specific treatment without physician review.
-      </div>
+      <div class="refs-footer">All references link to publicly available clinical resources. This AI system does not endorse any specific treatment without physician review.</div>
     </div>
     {% endif %}
 
-    <!-- 12. TCIA Reference Cases (imaging database) -->
+    <!-- 12. TCIA Reference Cases -->
     {% if tcia_data and not tcia_data.error %}
     <div class="tcia-section">
       <div class="tcia-header">
@@ -331,26 +275,14 @@
           <span class="tcia-icon">🏛</span>
           <div>
             <h3>Verified Reference Cases from TCIA</h3>
-            <p class="tcia-subtitle">
-              Real clinically-confirmed <strong>{{ tcia_data.collection }}</strong> cases from
-              The Cancer Imaging Archive (NIH public database)
-            </p>
+            <p class="tcia-subtitle">Real clinically-confirmed <strong>{{ tcia_data.collection }}</strong> cases from The Cancer Imaging Archive (NIH public database)</p>
           </div>
         </div>
         {% if tcia_data.patient_count %}
         <div class="tcia-stats">
-          <div class="tcia-stat">
-            <span class="tcia-stat-val">{{ tcia_data.patient_count }}</span>
-            <span class="tcia-stat-label">Patients</span>
-          </div>
-          <div class="tcia-stat">
-            <span class="tcia-stat-val">{{ tcia_data.total_series or '–' }}</span>
-            <span class="tcia-stat-label">Total Series</span>
-          </div>
-          <div class="tcia-stat">
-            <span class="tcia-stat-val">{{ tcia_data.modality }}</span>
-            <span class="tcia-stat-label">Modality</span>
-          </div>
+          <div class="tcia-stat"><span class="tcia-stat-val">{{ tcia_data.patient_count }}</span><span class="tcia-stat-label">Patients</span></div>
+          <div class="tcia-stat"><span class="tcia-stat-val">{{ tcia_data.total_series or '–' }}</span><span class="tcia-stat-label">Total Series</span></div>
+          <div class="tcia-stat"><span class="tcia-stat-val">{{ tcia_data.modality }}</span><span class="tcia-stat-label">Modality</span></div>
         </div>
         {% endif %}
       </div>
@@ -360,35 +292,22 @@
         <div class="tcia-case-card">
           <div class="tcia-case-header">
             <span class="tcia-case-icon">📋</span>
-            <div>
-              <div class="tcia-case-id">Patient: {{ s.PatientID }}</div>
-              <div class="tcia-case-meta">{{ s.Modality }} · {{ s.BodyPartExamined }} · {{ s.StudyDate }}</div>
-            </div>
+            <div><div class="tcia-case-id">Patient: {{ s.PatientID }}</div><div class="tcia-case-meta">{{ s.Modality }} · {{ s.BodyPartExamined }} · {{ s.StudyDate }}</div></div>
             <span class="tcia-verified-badge">✓ Verified</span>
           </div>
-          {% if s.SeriesDescription %}
-          <div class="tcia-case-desc">{{ s.SeriesDescription }}</div>
-          {% endif %}
+          {% if s.SeriesDescription %}<div class="tcia-case-desc">{{ s.SeriesDescription }}</div>{% endif %}
           <div class="tcia-case-footer">
             <span class="tcia-collection-tag">{{ s.Collection }}</span>
-            {% if s.ObjectCount is defined %}
-            <span class="tcia-images-count">{{ s.ObjectCount }} images</span>
-            {% endif %}
+            {% if s.ObjectCount is defined %}<span class="tcia-images-count">{{ s.ObjectCount }} images</span>{% endif %}
             <a href="{{ tcia_data.tcia_url }}" target="_blank" class="tcia-link">View on TCIA →</a>
           </div>
         </div>
         {% endfor %}
       </div>
       {% else %}
-      <div class="tcia-empty">
-        No reference series returned.
-        <a href="{{ tcia_data.tcia_url }}" target="_blank" class="tcia-link">Browse {{ tcia_data.collection }} on TCIA →</a>
-      </div>
+      <div class="tcia-empty">No reference series returned. <a href="{{ tcia_data.tcia_url }}" target="_blank" class="tcia-link">Browse {{ tcia_data.collection }} on TCIA →</a></div>
       {% endif %}
-      <div class="tcia-footer">
-        Data sourced from <a href="https://www.cancerimagingarchive.net" target="_blank">The Cancer Imaging Archive (TCIA)</a>
-        — a public NIH-funded repository of de-identified cancer imaging data.
-      </div>
+      <div class="tcia-footer">Data sourced from <a href="https://www.cancerimagingarchive.net" target="_blank">The Cancer Imaging Archive (TCIA)</a> — a public NIH-funded repository of de-identified cancer imaging data.</div>
     </div>
     {% endif %}
 
@@ -398,22 +317,14 @@
       <div class="meta-row"><span>File Type</span><span>{{ upload.file_type.upper() }}</span></div>
       <div class="meta-row"><span>Modality</span><span>{{ upload.modality }}</span></div>
       <div class="meta-row"><span>AI Engine</span><span>{{ prediction.model_version or 'Gemini Vision v2.2' }}</span></div>
-      <div class="meta-row">
-        <span>Rule Corrected</span>
-        <span>
-          {% if val_notes and 'Rule correction' in val_notes %}
-            <span class="corrected-badge">Yes — see validator notes</span>
-          {% else %}No{% endif %}
-        </span>
-      </div>
+      <div class="meta-row"><span>Rule Corrected</span><span>{% if val_notes and 'Rule correction' in val_notes %}<span class="corrected-badge">Yes — see validator notes</span>{% else %}No{% endif %}</span></div>
       <div class="meta-row"><span>Scan ID</span><span>#{{ upload.id }}</span></div>
     </div>
 
     <!-- 14. Disclaimer -->
     <div class="result-disclaimer">
       {% if disclaimer_text %}{{ disclaimer_text }}
-      {% else %}⚠ This AI analysis is for clinical decision-support only and does not constitute a medical diagnosis.
-      All findings must be reviewed and confirmed by a licensed radiologist or physician.{% endif %}
+      {% else %}⚠ This AI analysis is for clinical decision-support only and does not constitute a medical diagnosis. All findings must be reviewed and confirmed by a licensed radiologist or physician.{% endif %}
     </div>
 
     <!-- 15. Actions -->
@@ -460,19 +371,14 @@ document.addEventListener('DOMContentLoaded', function () {
       .sort(function(a,b){ return b[1]-a[1]; })
       .map(function(e){
         var cls=e[0], score=e[1], isTop=score===maxScore;
-        return (
-          '<div class="score-row">' +
-            '<span class="score-class'+(isTop?' score-class--top':'')+'">'+cls+'</span>'+
-            '<div class="score-track">'+
-              '<div class="score-fill'+(isTop?' score-fill--top':'')+'" style="width:'+(score*100).toFixed(0)+'%;transition:width .8s ease"></div>'+
-            '</div>'+
-            '<span class="score-val'+(isTop?' score-val--top':'')+'">'+( score*100).toFixed(1)+'%</span>'+
-          '</div>'
-        );
+        return '<div class="score-row">'+
+          '<span class="score-class'+(isTop?' score-class--top':'')+'">'+cls+'</span>'+
+          '<div class="score-track"><div class="score-fill'+(isTop?' score-fill--top':'')+'" style="width:'+(score*100).toFixed(0)+'%;transition:width .8s ease"></div></div>'+
+          '<span class="score-val'+(isTop?' score-val--top':'')+'">'+( score*100).toFixed(1)+'%</span>'+
+          '</div>';
       }).join('');
   } catch(e){ console.warn('Score chart:', e); }
 });
-
 function openLightbox(src) {
   if (!src||src==='undefined') return;
   document.getElementById('lightbox-img').src = src;
@@ -672,13 +578,297 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeLigh
 @media(max-width:900px){.result-layout{grid-template-columns:1fr}.image-column{position:static}.result-img{max-height:340px}}
 @media(max-width:480px){.result-img{max-height:240px}.result-layout{gap:1rem}}
 
-/* ── PRINT ── */
-@media print{
-  .navbar,.result-actions,.btn,footer,.page-header a,#lightbox,.zoom-overlay-btn{display:none!important}
-  .result-layout{display:block!important}
-  body{background:white!important;color:black!important}
-  .cancer-card,.findings-section,.recommendation-section,.differential-section,.explanation-section,.refs-section,.tcia-section{border:1px solid #ccc!important;background:#f9f9f9!important}
-  .cancer-diagnosis,.findings-body p,.rec-body,.diff-body,.expl-body{color:#111!important}
+/* ══════════════════════════════════════════
+   PRINT STYLES — Professional Medical Report
+   ══════════════════════════════════════════ */
+@media print {
+
+  @page {
+    size: A4;
+    margin: 18mm 15mm 20mm 15mm;
+  }
+  @page :first { margin-top: 10mm; }
+
+  /* Hide UI chrome */
+  .navbar, .result-actions, .btn, footer,
+  .page-header a, #lightbox, .zoom-overlay-btn,
+  .tcia-section, .refs-section,
+  .score-bars, .scores-section { display: none !important; }
+
+  * { animation: none !important; transition: none !important; }
+
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+    font-family: 'Georgia', serif !important;
+    font-size: 10pt !important;
+    line-height: 1.5 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Print page header ── */
+  .page-header {
+    display: block !important;
+    border-bottom: 2.5pt solid #1E3A5F !important;
+    padding-bottom: 10pt !important;
+    margin-bottom: 14pt !important;
+  }
+  .page-header::before {
+    content: "MEDICAL AI SYSTEM  ·  Imaging Analysis Report";
+    display: block;
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: .15em;
+    color: #1E3A5F !important;
+    text-transform: uppercase;
+    margin-bottom: 4pt;
+  }
+  .page-title {
+    font-size: 18pt !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin: 0 0 3pt !important;
+  }
+  .page-sub { font-size: 8pt !important; color: #475569 !important; }
+
+  /* ── Layout: stack columns ── */
+  .result-layout {
+    display: block !important;
+    margin: 0 !important;
+  }
+  .image-column { position: static !important; margin-bottom: 14pt !important; }
+  .result-details { width: 100% !important; }
+
+  /* ── Scan image ── */
+  .image-card {
+    background: #f8fafc !important;
+    border: 1pt solid #cbd5e1 !important;
+    border-radius: 6pt !important;
+    page-break-inside: avoid;
+    max-width: 320pt;
+    margin: 0 auto 10pt;
+  }
+  .image-label {
+    background: #f1f5f9 !important;
+    border-bottom: 1pt solid #cbd5e1 !important;
+    color: #334155 !important;
+    font-size: 7pt !important;
+    padding: 4pt 8pt !important;
+  }
+  .image-label-dot { background: #1E3A5F !important; box-shadow: none !important; }
+  .result-img { max-height: 240pt !important; min-height: 0 !important; }
+  .img-footer {
+    background: #f1f5f9 !important;
+    border-top: 1pt solid #e2e8f0 !important;
+    padding: 4pt 8pt !important;
+  }
+  .img-filename { color: #475569 !important; font-size: 7pt !important; }
+  .img-type-badge {
+    background: #e0e7ff !important;
+    color: #3730a3 !important;
+    border-color: #a5b4fc !important;
+    font-size: 6pt !important;
+  }
+  .dicom-placeholder {
+    background: #f8fafc !important;
+    color: #64748b !important;
+    min-height: 80pt !important;
+  }
+
+  /* ── Scan info panel ── */
+  .scan-info-panel {
+    background: #f8fafc !important;
+    border: 1pt solid #e2e8f0 !important;
+    border-radius: 6pt !important;
+    margin-top: 6pt !important;
+  }
+  .scan-info-row {
+    border-bottom: .5pt solid #e2e8f0 !important;
+    padding: 4pt 8pt !important;
+    font-size: 8pt !important;
+  }
+  .scan-info-label { color: #64748b !important; }
+  .scan-info-value { color: #0f172a !important; }
+
+  /* ── Priority banner ── */
+  .priority-banner {
+    border-radius: 6pt !important;
+    padding: 7pt 10pt !important;
+    margin-bottom: 10pt !important;
+    font-size: 9pt !important;
+    page-break-inside: avoid;
+    border-width: 1.5pt !important;
+  }
+  .priority-banner--high   { background: #fff1f2 !important; border-color: #dc2626 !important; color: #991b1b !important; }
+  .priority-banner--medium { background: #fefce8 !important; border-color: #ca8a04 !important; color: #92400e !important; }
+  .priority-banner--low    { background: #f0fdf4 !important; border-color: #16a34a !important; color: #15803d !important; }
+  .priority-action { color: inherit !important; }
+
+  /* ── Rule alert ── */
+  .rule-alert {
+    background: #eef2ff !important;
+    border: 1pt solid #a5b4fc !important;
+    border-radius: 6pt !important;
+    padding: 7pt 10pt !important;
+    margin-bottom: 8pt !important;
+    page-break-inside: avoid;
+  }
+  .rule-alert-title { color: #3730a3 !important; font-size: 8pt !important; }
+  .rule-alert-body  { color: #312e81 !important; font-size: 8pt !important; }
+
+  /* ── Diagnosis card ── */
+  .cancer-card {
+    border-radius: 6pt !important;
+    padding: 10pt 12pt !important;
+    margin: 0 0 10pt !important;
+    border-width: 1.5pt !important;
+    page-break-inside: avoid;
+  }
+  .cancer-card--high   { background: #fff1f2 !important; border-color: #fca5a5 !important; }
+  .cancer-card--medium { background: #fefce8 !important; border-color: #fde68a !important; }
+  .cancer-card--low    { background: #f0fdf4 !important; border-color: #86efac !important; }
+  .cancer-diagnosis    { font-size: 15pt !important; color: #0f172a !important; font-weight: 700 !important; }
+  .cancer-engine-tag   { font-size: 7pt  !important; color: #64748b !important; }
+  .cancer-type-label   { color: #64748b !important; font-size: 8pt !important; }
+  .cancer-type-value   { color: #0f172a !important; font-size: 8.5pt !important; }
+  .severity-badge      { border-radius: 3pt !important; font-size: 8pt !important; }
+  .severity-mild     { background: #dcfce7 !important; color: #166534 !important; }
+  .severity-moderate { background: #fef9c3 !important; color: #713f12 !important; }
+  .severity-severe   { background: #fee2e2 !important; color: #991b1b !important; }
+  .severity-critical { background: #fee2e2 !important; color: #7f1d1d !important; }
+
+  /* ── Confidence bar ── */
+  .confidence-section { margin: 0 0 10pt !important; page-break-inside: avoid; }
+  .confidence-header  { font-size: 8.5pt !important; color: #334155 !important; }
+  .confidence-pct     { color: #0f172a !important; font-size: 9pt !important; }
+  .confidence-track   {
+    height: 6pt !important;
+    background: #e2e8f0 !important;
+    border-radius: 3pt !important;
+  }
+  .conf-high   { background: #16a34a !important; }
+  .conf-medium { background: #ca8a04 !important; }
+  .conf-low    { background: #dc2626 !important; }
+  .confidence-warning {
+    background: #fefce8 !important; border-color: #fde68a !important;
+    color: #713f12 !important; font-size: 7.5pt !important;
+  }
+  .confidence-notice {
+    background: #f0f9ff !important; border-color: #7dd3fc !important;
+    color: #0c4a6e !important; font-size: 7.5pt !important;
+  }
+
+  /* ── Findings ── */
+  .findings-section {
+    background: #f0fdf4 !important;
+    border: 1pt solid #86efac !important;
+    border-radius: 6pt !important;
+    padding: 8pt 10pt !important;
+    margin: 0 0 8pt !important;
+    page-break-inside: avoid;
+  }
+  .findings-section--warn {
+    background: #fefce8 !important;
+    border-color: #fde68a !important;
+  }
+  .findings-header h3 { font-size: 8pt !important; color: #166534 !important; }
+  .findings-section--warn .findings-header h3 { color: #713f12 !important; }
+  .findings-badge {
+    background: #dcfce7 !important; color: #166534 !important;
+    border-color: #86efac !important; font-size: 7pt !important;
+  }
+  .findings-body   { font-size: 9pt !important; line-height: 1.6 !important; color: #14532d !important; }
+  .findings-section--warn .findings-body { color: #713f12 !important; }
+
+  /* ── Differential ── */
+  .differential-section {
+    background: #faf5ff !important;
+    border: 1pt solid #c4b5fd !important;
+    border-radius: 6pt !important;
+    padding: 8pt 10pt !important;
+    margin: 0 0 8pt !important;
+    page-break-inside: avoid;
+  }
+  .diff-header h3 { font-size: 8pt !important; color: #4c1d95 !important; }
+  .diff-badge { background: #ede9fe !important; color: #4c1d95 !important; border-color: #c4b5fd !important; font-size: 7pt !important; }
+  .diff-body  { font-size: 9pt !important; color: #2e1065 !important; line-height: 1.6 !important; }
+
+  /* ── Explanation ── */
+  .explanation-section {
+    background: #f0f9ff !important;
+    border: 1pt solid #7dd3fc !important;
+    border-radius: 6pt !important;
+    padding: 8pt 10pt !important;
+    margin: 0 0 8pt !important;
+    page-break-inside: avoid;
+  }
+  .expl-header h3 { font-size: 8pt !important; color: #0369a1 !important; }
+  .expl-body { font-size: 9pt !important; color: #0c4a6e !important; line-height: 1.6 !important; }
+
+  /* ── Treatment ── */
+  .recommendation-section {
+    background: #eef2ff !important;
+    border: 1pt solid #a5b4fc !important;
+    border-radius: 6pt !important;
+    padding: 8pt 10pt !important;
+    margin: 0 0 8pt !important;
+    page-break-inside: avoid;
+  }
+  .rec-header h3 { font-size: 8pt !important; color: #3730a3 !important; }
+  .rec-body { font-size: 9pt !important; color: #1e1b4b !important; line-height: 1.6 !important; }
+
+  /* ── Validation notes ── */
+  .validation-section {
+    background: #fffbeb !important;
+    border: 1pt solid #fde68a !important;
+    border-radius: 6pt !important;
+    padding: 7pt 10pt !important;
+    margin: 0 0 8pt !important;
+    page-break-inside: avoid;
+  }
+  .val-header h3 { font-size: 8pt !important; color: #78350f !important; }
+  .val-body { font-size: 8.5pt !important; color: #451a03 !important; }
+
+  /* ── Meta table ── */
+  .meta-table {
+    background: #f8fafc !important;
+    border: 1pt solid #e2e8f0 !important;
+    border-radius: 6pt !important;
+    margin: 0 0 8pt !important;
+    page-break-inside: avoid;
+  }
+  .meta-row { border-bottom: .5pt solid #e2e8f0 !important; padding: 4pt 8pt !important; font-size: 7.5pt !important; }
+  .meta-row span:first-child { color: #64748b !important; }
+  .meta-row span:last-child  { color: #0f172a !important; }
+  .corrected-badge {
+    background: #e0e7ff !important; color: #3730a3 !important;
+    border-color: #a5b4fc !important; font-size: 7pt !important;
+  }
+
+  /* ── Disclaimer ── */
+  .result-disclaimer {
+    background: #fffbeb !important;
+    border-left: 3pt solid #f59e0b !important;
+    color: #78350f !important;
+    font-size: 8pt !important;
+    padding: 6pt 10pt !important;
+    margin: 0 0 10pt !important;
+    page-break-inside: avoid;
+  }
+
+  /* ── Print footer ── */
+  .result-details::after {
+    content: "Generated by Medical AI System  ·  This report is for clinical decision-support only and does not constitute a medical diagnosis.  ·  All findings must be reviewed by a licensed radiologist or physician.";
+    display: block;
+    margin-top: 16pt;
+    padding-top: 8pt;
+    border-top: 1pt solid #cbd5e1;
+    font-size: 7pt;
+    color: #94a3b8 !important;
+    text-align: center;
+    font-style: italic;
+  }
 }
 </style>
 {% endblock %}

@@ -1,63 +1,481 @@
 {% extends "base.html" %}
-{% block title %}Register – MedAI{% endblock %}
+{% block title %}Register – Medical AI System{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-  <div class="auth-card">
-    <div class="auth-header">
-      <div class="auth-logo">⬡</div>
-      <h1>Create Account</h1>
-      <p class="auth-subtitle">Join MedAI – Medical Analysis Platform</p>
+<div class="mas-root">
+
+  <!-- ═══ LEFT PANEL — AI VISUALIZATION ═══ -->
+  <div class="mas-left">
+    <canvas id="neuroCanvas"></canvas>
+
+    <div class="hud hud--tl">
+      <div class="hud-line">SYS.INIT <span class="hud-val blink">ONLINE</span></div>
+      <div class="hud-line">AI.ENGINE <span class="hud-val">v4.2.1</span></div>
+      <div class="hud-line">NODES <span class="hud-val" id="nodeCount">—</span></div>
+    </div>
+    <div class="hud hud--tr">
+      <div class="hud-line">SCAN <span class="hud-val blink2">ACTIVE</span></div>
+      <div class="hud-line">ACCURACY <span class="hud-val">98.7%</span></div>
+      <div class="hud-line">LATENCY <span class="hud-val">12ms</span></div>
+    </div>
+    <div class="hud hud--bl">
+      <div class="hud-bar-label">NEURAL LOAD</div>
+      <div class="hud-bar"><div class="hud-bar-fill" style="width:73%"></div></div>
+      <div class="hud-bar-label">MEM USAGE</div>
+      <div class="hud-bar"><div class="hud-bar-fill" style="width:41%"></div></div>
+    </div>
+    <div class="hud hud--br">
+      <div class="vital">
+        <span class="vital-icon">♥</span>
+        <span class="vital-val" id="heartRate">72</span>
+        <span class="vital-unit">BPM</span>
+      </div>
+      <div class="vital">
+        <span class="vital-icon">⚡</span>
+        <span class="vital-val">98.6</span>
+        <span class="vital-unit">°F</span>
+      </div>
     </div>
 
-    <form method="POST" action="{{ url_for('auth.register') }}" class="auth-form">
-      <div class="form-group">
-        <label for="name">Full Name</label>
-        <input type="text" id="name" name="name" required autofocus
-               value="{{ name or '' }}" placeholder="Dr. Jane Smith"/>
+    <div class="brain-core">
+      <div class="core-ring core-ring--1"></div>
+      <div class="core-ring core-ring--2"></div>
+      <div class="core-ring core-ring--3"></div>
+      <div class="core-pulse"></div>
+      <div class="core-center">
+        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="30" cy="30" r="28" stroke="#1E90FF" stroke-width="1" stroke-dasharray="4 2" opacity=".4"/>
+          <path d="M22 20 C18 20 14 24 14 28 C14 34 18 36 22 36 C22 40 26 44 30 44 C34 44 38 40 38 36 C42 36 46 34 46 28 C46 24 42 20 38 20 C38 16 34 14 30 14 C26 14 22 16 22 20Z" stroke="#1E90FF" stroke-width="1.5" fill="none" opacity=".9"/>
+          <line x1="30" y1="14" x2="30" y2="44" stroke="#00BFFF" stroke-width=".5" opacity=".5"/>
+          <line x1="14" y1="28" x2="46" y2="28" stroke="#00BFFF" stroke-width=".5" opacity=".5"/>
+          <circle cx="30" cy="28" r="3" fill="#1E90FF" opacity=".9"/>
+          <circle cx="30" cy="28" r="1.5" fill="#00BFFF"/>
+        </svg>
       </div>
-      <div class="form-group">
-        <label for="email">Institutional Email</label>
-        <input type="email" id="email" name="email" required
-               value="{{ email or '' }}" placeholder="doctor@hospital.org"/>
-      </div>
-      <div class="form-group">
-        <label for="role">Role</label>
-        <select id="role" name="role">
-          <option value="clinician">Clinician</option>
-          <option value="radiologist">Radiologist</option>
-          <option value="researcher">Researcher</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="password">Password <small>(min. 8 characters)</small></label>
-        <input type="password" id="password" name="password" required
-               placeholder="••••••••" minlength="8"/>
-      </div>
-      <div class="form-group">
-        <label for="confirm_password">Confirm Password</label>
-        <input type="password" id="confirm_password" name="confirm_password" required
-               placeholder="••••••••"/>
-      </div>
-      <button type="submit" class="btn btn-primary btn-full">
-        Create Account <span>→</span>
-      </button>
-    </form>
+    </div>
 
-    <p class="auth-footer">
-      Already registered? <a href="{{ url_for('auth.login') }}">Sign In</a>
-    </p>
+    <div class="scan-beam"></div>
+
+    <div class="mas-brand">
+      <div class="mas-logo-text">MEDICAL<span>AI</span></div>
+      <div class="mas-tagline">AI-Powered Disease &amp; Lab Result Analysis</div>
+    </div>
+
+    <div class="trust-row">
+      <span class="trust-badge">🔒 Encrypted</span>
+      <span class="trust-badge">⚕ Medical-grade</span>
+      <span class="trust-badge">🛡 Secure AI</span>
+    </div>
   </div>
 
-  <div class="auth-info">
-    <div class="info-badge">SECURE</div>
-    <h2>Your data.<br/>Your control.</h2>
-    <ul class="feature-list">
-      <li>🔒 Bcrypt password hashing</li>
-      <li>📁 Isolated per-user storage</li>
-      <li>🏥 Role-based access</li>
-      <li>📋 Full audit history</li>
-    </ul>
+  <!-- ═══ RIGHT PANEL — REGISTER FORM ═══ -->
+  <div class="mas-right">
+    <div class="form-card">
+
+      <div class="form-card__header">
+        <div class="form-logo">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="15" stroke="#1E90FF" stroke-width="1.5"/>
+            <path d="M16 8 L16 24 M8 16 L24 16" stroke="#00BFFF" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="3" fill="#1E90FF"/>
+          </svg>
+        </div>
+        <h1 class="form-title">CREATE ACCOUNT</h1>
+        <p class="form-sub">Join Medical AI System</p>
+      </div>
+
+      <form method="POST" action="{{ url_for('auth.register') }}" class="mas-form" id="registerForm">
+
+        <!-- Full Name -->
+        <div class="mas-field">
+          <div class="mas-field__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <input type="text" name="name" id="name" required
+                 placeholder="Dr. Jane Smith" value="{{ name or '' }}"/>
+          <label for="name">Full Name</label>
+          <div class="mas-field__glow"></div>
+        </div>
+
+        <!-- Email -->
+        <div class="mas-field">
+          <div class="mas-field__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <input type="email" name="email" id="email" required
+                 placeholder="doctor@hospital.org" value="{{ email or '' }}"/>
+          <label for="email">Institutional Email</label>
+          <div class="mas-field__glow"></div>
+        </div>
+
+        <!-- Role — custom dropdown (fixes invisible options bug) -->
+        <div class="mas-field mas-field--select" id="roleField">
+          <div class="mas-field__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="mas-custom-select" id="roleSelect">
+            <div class="mas-custom-select__display" id="roleDisplay">
+              <span id="roleValue">Clinician</span>
+              <svg class="mas-select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="mas-custom-select__dropdown" id="roleDropdown">
+              <div class="mas-option selected" data-value="clinician">Clinician</div>
+              <div class="mas-option" data-value="radiologist">Radiologist</div>
+              <div class="mas-option" data-value="researcher">Researcher</div>
+              <div class="mas-option" data-value="patient">Patient</div>
+            </div>
+          </div>
+          <!-- Hidden input submitted with form -->
+          <input type="hidden" name="role" id="roleHidden" value="clinician"/>
+          <div class="mas-field__glow"></div>
+        </div>
+
+        <!-- Password -->
+        <div class="mas-field">
+          <div class="mas-field__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <input type="password" name="password" id="password" required
+                 placeholder="••••••••" minlength="8"/>
+          <label for="password">Password <small>(min. 8)</small></label>
+          <div class="mas-field__glow"></div>
+          <button type="button" class="mas-eye" id="togglePw" tabindex="-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="mas-field">
+          <div class="mas-field__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <input type="password" name="confirm_password" id="confirm_password" required
+                 placeholder="••••••••"/>
+          <label for="confirm_password">Confirm Password</label>
+          <div class="mas-field__glow"></div>
+          <button type="button" class="mas-eye" id="togglePw2" tabindex="-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+
+        <!-- Terms checkbox -->
+        <div class="terms-check-wrap">
+          <label class="mas-check mas-check--terms">
+            <input type="checkbox" id="termsCheckbox" name="terms" required/>
+            <span class="mas-check__box"></span>
+            <span class="terms-text">
+              I agree to the
+              <button type="button" class="terms-inline-btn" id="termsOpenBtn">Terms &amp; Disclaimer</button>.
+              Developers are <strong>not liable</strong> for medical decisions made using this system.
+            </span>
+          </label>
+        </div>
+
+        <button type="submit" id="submitBtn" class="mas-btn" disabled>
+          <span class="mas-btn__text">CREATE ACCOUNT</span>
+          <span class="mas-btn__icon">→</span>
+          <div class="mas-btn__shine"></div>
+        </button>
+
+      </form>
+
+      <div class="form-card__footer">
+        <span>Already registered?</span>
+        <a href="{{ url_for('auth.login') }}" class="mas-link mas-link--cta">Sign In →</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Terms Modal -->
+<div id="termsModal" class="tmodal-overlay" style="display:none;" role="dialog" aria-modal="true">
+  <div class="tmodal-box">
+    <div class="tmodal-header">
+      <span class="tmodal-icon">⚖️</span>
+      <div>
+        <h2 class="tmodal-title">Terms of Use &amp; Disclaimer</h2>
+        <p class="tmodal-sub">Medical AI System</p>
+      </div>
+      <button type="button" class="tmodal-close" onclick="closeTermsModal()">✕</button>
+    </div>
+    <div class="tmodal-body">
+      <div class="tmodal-alert">
+        <strong>⚠️ Not a Medical Device.</strong> Medical AI System is an AI-assisted decision-support tool.
+        It is <strong>not</strong> a certified medical device and must not be used as the sole basis for any clinical decision.
+      </div>
+      <div class="tmodal-section">
+        <h4>1. No Medical Liability</h4>
+        <p>The developers, contributors, and operators accept <strong>no responsibility or liability</strong> for any harm, misdiagnosis, delayed diagnosis, incorrect treatment, or any adverse outcome resulting from reliance on the AI-generated analysis.</p>
+      </div>
+      <div class="tmodal-section">
+        <h4>2. Professional Review Required</h4>
+        <p>Every result generated by this system <strong>must be reviewed and confirmed</strong> by a licensed radiologist, physician, or qualified healthcare professional before any clinical action is taken.</p>
+      </div>
+      <div class="tmodal-section">
+        <h4>3. Data &amp; Privacy</h4>
+        <p>Uploaded images are processed via Google Gemini Vision AI and are not permanently retained. Data is stored securely in accordance with HIPAA, GDPR, and R.A. 10173 (Philippines Data Privacy Act).</p>
+      </div>
+      <div class="tmodal-section">
+        <h4>4. Acceptable Use</h4>
+        <p>This platform is intended for healthcare professionals, researchers, and students in a supervised context. Use for emergency decisions without professional oversight is prohibited.</p>
+      </div>
+      <div class="tmodal-section">
+        <h4>5. Indemnification</h4>
+        <p>By creating an account, you agree to <strong>indemnify and hold harmless</strong> the developers from any claims arising from your use of the platform.</p>
+      </div>
+    </div>
+    <div class="tmodal-footer">
+      <button type="button" class="mas-btn" style="width:auto;padding:.75rem 1.5rem" onclick="acceptTerms()">
+        ✅ I Understand — Close
+        <div class="mas-btn__shine"></div>
+      </button>
+    </div>
   </div>
 </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Neural canvas ── */
+(function(){
+  var canvas=document.getElementById('neuroCanvas');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var W,H,nodes=[];
+  var NODE_COUNT=55;
+  function resize(){W=canvas.width=canvas.offsetWidth;H=canvas.height=canvas.offsetHeight;}
+  function initNodes(){
+    nodes=[];
+    for(var i=0;i<NODE_COUNT;i++){
+      nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*2+1,pulse:Math.random()*Math.PI*2,active:Math.random()>.7});
+    }
+    var el=document.getElementById('nodeCount');
+    if(el)el.textContent=NODE_COUNT;
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<nodes.length;i++){
+      for(var j=i+1;j<nodes.length;j++){
+        var dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<140){ctx.beginPath();ctx.strokeStyle='rgba(30,144,255,'+(1-d/140)*.35+')';ctx.lineWidth=.5;ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();}
+      }
+    }
+    nodes.forEach(function(n){
+      n.pulse+=.03;var glow=(Math.sin(n.pulse)*.5+.5);var r2=n.r+(n.active?glow*3:0);
+      ctx.beginPath();var g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r2*3);
+      g.addColorStop(0,n.active?'rgba(0,191,255,.9)':'rgba(30,144,255,.6)');g.addColorStop(1,'rgba(30,144,255,0)');
+      ctx.fillStyle=g;ctx.arc(n.x,n.y,r2*3,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.fillStyle=n.active?'#00BFFF':'rgba(30,144,255,.8)';ctx.arc(n.x,n.y,r2,0,Math.PI*2);ctx.fill();
+      n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();initNodes();draw();
+  window.addEventListener('resize',function(){resize();initNodes();});
+  setInterval(function(){var el=document.getElementById('heartRate');if(el)el.textContent=68+Math.floor(Math.random()*12);},1800);
+})();
+
+/* ── Password toggles ── */
+[['togglePw','password'],['togglePw2','confirm_password']].forEach(function(pair){
+  var btn=document.getElementById(pair[0]),inp=document.getElementById(pair[1]);
+  if(btn&&inp)btn.addEventListener('click',function(){inp.type=inp.type==='password'?'text':'password';});
+});
+
+/* ── Custom role dropdown ── */
+(function(){
+  var select   = document.getElementById('roleSelect');
+  var display  = document.getElementById('roleDisplay');
+  var dropdown = document.getElementById('roleDropdown');
+  var valueEl  = document.getElementById('roleValue');
+  var hidden   = document.getElementById('roleHidden');
+  if(!select) return;
+
+  display.addEventListener('click', function(e){
+    e.stopPropagation();
+    select.classList.toggle('open');
+  });
+
+  dropdown.querySelectorAll('.mas-option').forEach(function(opt){
+    opt.addEventListener('click', function(e){
+      e.stopPropagation();
+      var val  = this.dataset.value;
+      var text = this.textContent.trim();
+      valueEl.textContent = text;
+      hidden.value = val;
+      dropdown.querySelectorAll('.mas-option').forEach(function(o){ o.classList.remove('selected'); });
+      this.classList.add('selected');
+      select.classList.remove('open');
+    });
+  });
+
+  document.addEventListener('click', function(){
+    select.classList.remove('open');
+  });
+})();
+
+/* ── Terms ── */
+var checkbox  = document.getElementById('termsCheckbox');
+var submitBtn = document.getElementById('submitBtn');
+checkbox.addEventListener('change', function(){ submitBtn.disabled = !this.checked; });
+document.getElementById('termsOpenBtn').addEventListener('click', function(){ document.getElementById('termsModal').style.display='flex'; });
+window.closeTermsModal = function(){ document.getElementById('termsModal').style.display='none'; };
+window.acceptTerms = function(){ checkbox.checked=true; submitBtn.disabled=false; closeTermsModal(); };
+document.getElementById('termsModal').addEventListener('click', function(e){ if(e.target===this) closeTermsModal(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeTermsModal(); });
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+/* ── Root ── */
+.mas-root{display:flex;min-height:100vh;background:#05070A;font-family:'Rajdhani',sans-serif;overflow:hidden;position:relative;}
+
+/* ══ LEFT PANEL ══ */
+.mas-left{flex:0 0 60%;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 50%,#0a1628 0%,#05070A 70%);}
+#neuroCanvas{position:absolute;inset:0;width:100%;height:100%;}
+
+.hud{position:absolute;font-family:'Share Tech Mono',monospace;font-size:.65rem;color:rgba(30,144,255,.7);line-height:1.8;padding:.75rem 1rem;backdrop-filter:blur(2px)}
+.hud--tl{top:1.5rem;left:1.5rem;border-left:1px solid rgba(30,144,255,.3);border-top:1px solid rgba(30,144,255,.3)}
+.hud--tr{top:1.5rem;right:1.5rem;text-align:right;border-right:1px solid rgba(30,144,255,.3);border-top:1px solid rgba(30,144,255,.3)}
+.hud--bl{bottom:5rem;left:1.5rem;border-left:1px solid rgba(30,144,255,.3);border-bottom:1px solid rgba(30,144,255,.3)}
+.hud--br{bottom:5rem;right:1.5rem;text-align:right;border-right:1px solid rgba(30,144,255,.3);border-bottom:1px solid rgba(30,144,255,.3)}
+.hud-line{display:flex;gap:.5rem;align-items:center;justify-content:space-between}
+.hud--tr .hud-line{flex-direction:row-reverse}
+.hud-val{color:#00BFFF;font-weight:700}
+.blink{animation:blink 1.2s step-end infinite}
+.blink2{animation:blink 1.8s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hud-bar-label{font-size:.58rem;color:rgba(30,144,255,.5);margin-top:.3rem}
+.hud-bar{height:3px;width:120px;background:rgba(30,144,255,.15);border-radius:2px;margin:.15rem 0}
+.hud-bar-fill{height:100%;background:linear-gradient(90deg,#1E90FF,#00BFFF);border-radius:2px}
+.vital{display:flex;align-items:center;gap:.4rem;margin:.2rem 0}
+.vital-icon{color:#00BFFF;font-size:.9rem}
+.vital-val{color:#fff;font-size:1.1rem;font-weight:700;font-family:'Share Tech Mono',monospace}
+.vital-unit{color:rgba(30,144,255,.6);font-size:.6rem}
+
+.brain-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;display:flex;align-items:center;justify-content:center;}
+.core-ring{position:absolute;border-radius:50%;border:1px solid rgba(30,144,255,.25);animation:coreRotate linear infinite;}
+.core-ring--1{width:180px;height:180px;animation-duration:12s;border-style:dashed}
+.core-ring--2{width:130px;height:130px;animation-duration:8s;animation-direction:reverse;border-color:rgba(0,191,255,.3)}
+.core-ring--3{width:80px;height:80px;animation-duration:5s;border-color:rgba(30,144,255,.5)}
+@keyframes coreRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.core-pulse{position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(30,144,255,.12) 0%,transparent 70%);animation:corePulse 2.5s ease-in-out infinite;}
+@keyframes corePulse{0%,100%{transform:scale(.85);opacity:.5}50%{transform:scale(1.1);opacity:1}}
+.core-center{width:56px;height:56px;position:relative;z-index:2}
+.core-center svg{width:100%;height:100%;filter:drop-shadow(0 0 8px #1E90FF)}
+
+.scan-beam{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,191,255,.6),transparent);animation:scanDown 4s linear infinite;pointer-events:none;box-shadow:0 0 20px rgba(0,191,255,.4);}
+@keyframes scanDown{0%{top:-2px;opacity:0}5%{opacity:1}95%{opacity:1}100%{top:100%;opacity:0}}
+
+.mas-brand{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);text-align:center;}
+.mas-logo-text{font-size:1.6rem;font-weight:700;letter-spacing:.25em;color:#fff;text-transform:uppercase;font-family:'Rajdhani',sans-serif;text-shadow:0 0 30px rgba(30,144,255,.8);}
+.mas-logo-text span{color:#00BFFF}
+.mas-tagline{font-size:.7rem;color:rgba(30,144,255,.6);letter-spacing:.12em;margin-top:.25rem;font-family:'Share Tech Mono',monospace}
+.trust-row{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);display:flex;gap:.5rem;}
+.trust-badge{font-size:.6rem;padding:.2rem .55rem;border-radius:20px;background:rgba(30,144,255,.1);border:1px solid rgba(30,144,255,.25);color:rgba(0,191,255,.8);font-family:'Share Tech Mono',monospace;white-space:nowrap;}
+
+/* ══ RIGHT PANEL ══ */
+.mas-right{flex:0 0 40%;display:flex;align-items:center;justify-content:center;padding:1.5rem 2rem;background:linear-gradient(135deg,rgba(10,22,40,.95) 0%,rgba(5,7,10,.98) 100%);border-left:1px solid rgba(30,144,255,.15);position:relative;overflow-y:auto;}
+.mas-right::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(30,144,255,.03) 39px,rgba(30,144,255,.03) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(30,144,255,.03) 39px,rgba(30,144,255,.03) 40px);pointer-events:none;}
+
+.form-card{width:100%;max-width:380px;position:relative;z-index:1;background:rgba(10,18,32,.8);border:1px solid rgba(30,144,255,.2);border-radius:16px;padding:2rem 1.75rem;backdrop-filter:blur(20px);box-shadow:0 0 40px rgba(30,144,255,.08),0 0 1px rgba(0,191,255,.3) inset;animation:cardIn .6s cubic-bezier(.16,1,.3,1) forwards;}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+.form-card__header{text-align:center;margin-bottom:1.5rem}
+.form-logo{display:flex;justify-content:center;margin-bottom:.75rem;filter:drop-shadow(0 0 12px rgba(30,144,255,.8))}
+.form-title{font-size:1.4rem;font-weight:700;letter-spacing:.15em;color:#fff;font-family:'Rajdhani',sans-serif;margin:0 0 .3rem;text-shadow:0 0 20px rgba(30,144,255,.5);}
+.form-sub{font-size:.72rem;color:rgba(30,144,255,.6);letter-spacing:.1em;font-family:'Share Tech Mono',monospace}
+
+/* ── Form fields ── */
+.mas-form{display:flex;flex-direction:column;gap:.9rem}
+.mas-field{position:relative}
+.mas-field input{width:100%;padding:.8rem 1rem .8rem 2.75rem;background:rgba(30,144,255,.06);border:1px solid rgba(30,144,255,.2);border-radius:8px;color:#e2e8f0;font-size:.86rem;font-family:'Rajdhani',sans-serif;font-weight:500;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;letter-spacing:.03em;box-sizing:border-box;}
+.mas-field input::placeholder{color:rgba(30,144,255,.35);font-size:.8rem}
+.mas-field input:focus{border-color:#1E90FF;background:rgba(30,144,255,.1);box-shadow:0 0 0 3px rgba(30,144,255,.12),0 0 20px rgba(30,144,255,.08);}
+.mas-field label{position:absolute;left:2.75rem;top:50%;transform:translateY(-50%);font-size:.72rem;color:rgba(30,144,255,.5);letter-spacing:.08em;pointer-events:none;transition:all .2s;font-family:'Share Tech Mono',monospace;display:none;}
+.mas-field input:focus~label,.mas-field input:not(:placeholder-shown)~label{top:-.55rem;left:.75rem;font-size:.6rem;background:rgba(10,18,32,.9);padding:0 .3rem;display:block;}
+.mas-field__icon{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:rgba(30,144,255,.5);pointer-events:none;display:flex;}
+.mas-field__glow{position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,#1E90FF,transparent);opacity:0;transition:opacity .3s;}
+.mas-field input:focus~.mas-field__glow,.mas-field:focus-within .mas-field__glow{opacity:1;}
+.mas-eye{position:absolute;right:.85rem;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(30,144,255,.4);cursor:pointer;padding:.2rem;display:flex;transition:color .2s;}
+.mas-eye:hover{color:#1E90FF}
+
+/* ── Custom select dropdown ── */
+.mas-field--select{z-index:10;}
+.mas-custom-select{position:relative;width:100%;}
+.mas-custom-select__display{width:100%;padding:.8rem 1rem .8rem 2.75rem;background:rgba(30,144,255,.06);border:1px solid rgba(30,144,255,.2);border-radius:8px;color:#e2e8f0;font-size:.86rem;font-family:'Rajdhani',sans-serif;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:border-color .2s,box-shadow .2s,background .2s;box-sizing:border-box;user-select:none;}
+.mas-custom-select__display:hover,.mas-custom-select.open .mas-custom-select__display{border-color:#1E90FF;background:rgba(30,144,255,.1);box-shadow:0 0 0 3px rgba(30,144,255,.12);}
+.mas-select-arrow{transition:transform .2s;flex-shrink:0;color:rgba(30,144,255,.6);}
+.mas-custom-select.open .mas-select-arrow{transform:rotate(180deg);}
+.mas-custom-select__dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#0a1628;border:1px solid rgba(30,144,255,.35);border-radius:8px;overflow:hidden;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.8),0 0 20px rgba(30,144,255,.1);}
+.mas-custom-select.open .mas-custom-select__dropdown{display:block;}
+.mas-option{padding:.75rem 1rem;color:#94a3b8;font-size:.85rem;font-family:'Rajdhani',sans-serif;font-weight:500;cursor:pointer;transition:background .15s,color .15s;border-bottom:1px solid rgba(30,144,255,.08);}
+.mas-option:last-child{border-bottom:none;}
+.mas-option:hover{background:rgba(30,144,255,.15);color:#00BFFF;}
+.mas-option.selected{background:rgba(30,144,255,.1);color:#1E90FF;}
+
+/* ── Terms checkbox ── */
+.terms-check-wrap{padding:.75rem .9rem;background:rgba(30,144,255,.05);border:1px solid rgba(30,144,255,.18);border-radius:8px;transition:border-color .2s}
+.terms-check-wrap:has(input:checked){border-color:rgba(30,144,255,.45);background:rgba(30,144,255,.09)}
+.mas-check{display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;font-size:.76rem;color:rgba(30,144,255,.55)}
+.mas-check input[type=checkbox]{display:none}
+.mas-check__box{width:15px;height:15px;border-radius:3px;flex-shrink:0;margin-top:2px;border:1px solid rgba(30,144,255,.4);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.mas-check input:checked~.mas-check__box{background:#1E90FF;border-color:#1E90FF}
+.mas-check input:checked~.mas-check__box::after{content:'✓';color:#fff;font-size:.55rem;font-weight:700}
+.terms-text{font-size:.74rem;line-height:1.6;color:rgba(100,148,220,.8)}
+.terms-text strong{color:#fca5a5}
+.terms-inline-btn{background:none;border:none;color:#1E90FF;font-size:.74rem;font-weight:600;text-decoration:underline;text-decoration-style:dashed;cursor:pointer;padding:0;transition:color .15s}
+.terms-inline-btn:hover{color:#00BFFF}
+
+/* ── Submit button ── */
+.mas-btn{position:relative;width:100%;padding:.9rem;overflow:hidden;background:linear-gradient(135deg,#0F4D92 0%,#1E90FF 50%,#00BFFF 100%);border:none;border-radius:8px;color:#fff;font-size:.85rem;font-weight:700;letter-spacing:.15em;font-family:'Rajdhani',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 24px rgba(30,144,255,.35);margin-top:.1rem;}
+.mas-btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.mas-btn:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(30,144,255,.55),0 0 0 1px rgba(0,191,255,.3);}
+.mas-btn__shine{position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);animation:btnShine 2.5s ease-in-out infinite;pointer-events:none;}
+@keyframes btnShine{0%{left:-100%}50%,100%{left:150%}}
+
+.mas-link{font-size:.75rem;color:rgba(30,144,255,.55);text-decoration:none;transition:color .2s;font-family:'Share Tech Mono',monospace}
+.mas-link:hover{color:#00BFFF}
+.mas-link--cta{color:#1E90FF;font-weight:600;font-size:.8rem}
+.mas-link--cta:hover{color:#00BFFF;text-shadow:0 0 8px rgba(0,191,255,.4)}
+
+.form-card__footer{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:1.25rem;font-size:.78rem;color:rgba(30,144,255,.45);border-top:1px solid rgba(30,144,255,.1);padding-top:1rem;}
+
+/* ── Terms modal ── */
+.tmodal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:1rem}
+.tmodal-box{background:rgba(10,18,32,.97);border:1px solid rgba(30,144,255,.25);border-radius:16px;width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(30,144,255,.15),0 24px 64px rgba(0,0,0,.7);overflow:hidden}
+.tmodal-header{display:flex;align-items:flex-start;gap:.875rem;padding:1.25rem 1.5rem 1rem;border-bottom:1px solid rgba(30,144,255,.12);flex-shrink:0}
+.tmodal-icon{font-size:1.75rem;line-height:1;margin-top:2px;flex-shrink:0}
+.tmodal-title{font-size:.98rem;font-weight:700;color:#e2e8f0;margin:0 0 .2rem;font-family:'Rajdhani',sans-serif;letter-spacing:.05em}
+.tmodal-sub{font-size:.72rem;color:rgba(30,144,255,.5);margin:0;font-family:'Share Tech Mono',monospace}
+.tmodal-close{margin-left:auto;background:none;border:1px solid rgba(30,144,255,.2);border-radius:6px;color:rgba(30,144,255,.6);font-size:.85rem;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.tmodal-close:hover{background:rgba(30,144,255,.1);color:#1E90FF}
+.tmodal-body{padding:1.25rem 1.5rem;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:.85rem}
+.tmodal-alert{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:.85rem 1rem;font-size:.8rem;color:#fca5a5;line-height:1.55}
+.tmodal-alert strong{color:#f87171}
+.tmodal-section h4{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(30,144,255,.5);margin:0 0 .3rem;font-family:'Share Tech Mono',monospace}
+.tmodal-section p{font-size:.78rem;color:#94a3b8;line-height:1.65;margin:0}
+.tmodal-section strong{color:#7dd3fc}
+.tmodal-footer{display:flex;justify-content:flex-end;padding:1rem 1.5rem;border-top:1px solid rgba(30,144,255,.1);flex-shrink:0}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  .mas-root{flex-direction:column}
+  .mas-left{flex:0 0 260px;min-height:260px}
+  .mas-right{flex:1;padding:1.25rem 1rem;overflow-y:auto}
+  .mas-brand{bottom:1.5rem}
+  .trust-row,.hud--bl,.hud--br{display:none}
+}
+@media(max-width:480px){
+  .mas-left{flex:0 0 180px;min-height:180px}
+  .form-card{padding:1.5rem 1rem}
+  .brain-core{width:90px;height:90px}
+  .core-ring--1{width:90px;height:90px}
+  .core-ring--2{width:65px;height:65px}
+  .core-ring--3{width:40px;height:40px}
+}
+</style>
 {% endblock %}

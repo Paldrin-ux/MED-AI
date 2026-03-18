@@ -3,11 +3,15 @@
 
 {% block head %}
 <style>
+/* ══════════════════════════════════════
+   SCREEN STYLES
+══════════════════════════════════════ */
 .lab-result-page{max-width:900px;margin:0 auto;padding:1.5rem 1rem 4rem}
 .lab-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
 .lab-page-header-left h1{font-size:1.6rem;font-weight:700;color:#f1f5f9;margin:0 0 .25rem}
 .lab-page-header-left p{font-size:.82rem;color:#64748b;margin:0}
 .lab-header-actions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+
 .urgency-banner{border-radius:12px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem;font-size:.92rem;font-weight:600}
 .urgency-banner--routine{background:rgba(16,185,129,.1);border:1.5px solid rgba(16,185,129,.3);color:#6ee7b7}
 .urgency-banner--soon{background:rgba(251,191,36,.1);border:1.5px solid rgba(251,191,36,.3);color:#fde68a}
@@ -17,8 +21,10 @@
 .urgency-icon{font-size:1.4rem;flex-shrink:0}
 .urgency-text strong{display:block;font-size:1rem}
 .urgency-text span{font-size:.8rem;font-weight:400;opacity:.85}
+
 .lab-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem}
 @media(max-width:640px){.lab-layout{grid-template-columns:1fr}}
+
 .lab-card{background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
 .lab-card-header{display:flex;align-items:center;gap:.6rem;padding:.9rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
 .lab-card-header-icon{font-size:1rem}
@@ -27,6 +33,7 @@
 .patient-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
 .patient-info-label{font-size:.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem}
 .patient-info-value{font-size:.88rem;font-weight:600;color:#e2e8f0}
+
 .lab-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
 @media(max-width:480px){.lab-stats-row{grid-template-columns:1fr}}
 .lab-stat-card{border-radius:14px;padding:1.1rem 1rem;text-align:center;border:1.5px solid}
@@ -41,10 +48,12 @@
 .lab-stat-card--normal .lab-stat-label{color:#6ee7b7}
 .lab-stat-card--abnormal .lab-stat-label{color:#fde68a}
 .lab-stat-card--critical .lab-stat-label{color:#fca5a5}
+
 .summary-section{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.04));border:1.5px solid rgba(99,102,241,.25);border-radius:16px;padding:1.25rem 1.4rem;margin-bottom:1.5rem}
 .summary-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem}
 .summary-header h3{font-size:.85rem;font-weight:700;color:#a5b4fc;letter-spacing:.06em;text-transform:uppercase;margin:0}
 .summary-text{font-size:.95rem;line-height:1.8;color:#c7d2fe}
+
 .test-results-section{margin-bottom:1.5rem}
 .test-results-section h3{font-size:.85rem;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin:0 0 .9rem;display:flex;align-items:center;gap:.5rem}
 .results-table{width:100%;border-collapse:separate;border-spacing:0 .4rem}
@@ -67,6 +76,7 @@
 .status-badge--high{background:rgba(251,146,60,.15);color:#fdba74;border:1px solid rgba(251,146,60,.3)}
 .status-badge--critical{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
 .significance-text{font-size:.78rem;color:#94a3b8;line-height:1.4}
+
 .lab-full-section{border-radius:16px;padding:1.25rem 1.4rem;margin-bottom:1.25rem;border:1.5px solid}
 .lab-full-section.concerns{background:linear-gradient(135deg,rgba(239,68,68,.07),rgba(220,38,38,.03));border-color:rgba(239,68,68,.2)}
 .lab-full-section.interpretation{background:linear-gradient(135deg,rgba(14,165,233,.07),rgba(2,132,199,.03));border-color:rgba(14,165,233,.2)}
@@ -80,17 +90,21 @@
 .concerns .lab-section-body{color:#fecdd3}
 .interpretation .lab-section-body{color:#bae6fd}
 .next-steps .lab-section-body{color:#d1fae5}
+
 .concerns-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.6rem}
 .concerns-list li{display:flex;gap:.75rem;align-items:flex-start}
 .concern-num{width:22px;height:22px;border-radius:50%;background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.15rem}
+
 .lab-meta-footer{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;padding:1rem 1.25rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:1.25rem}
 .lab-meta-item{font-size:.75rem}
 .lab-meta-item .meta-key{color:#64748b;margin-right:.4rem}
 .lab-meta-item .meta-val{color:#94a3b8;font-weight:600}
+
 .lab-disclaimer{padding:.9rem 1.1rem;background:rgba(148,163,184,.05);border-left:3px solid rgba(148,163,184,.3);border-radius:0 8px 8px 0;font-size:.76rem;color:#94a3b8;line-height:1.7;margin-bottom:1.5rem}
 .lab-actions{display:flex;gap:.75rem;flex-wrap:wrap}
 .no-findings-note{text-align:center;padding:2rem;color:#64748b;font-size:.85rem}
-@media print{.navbar,.lab-header-actions .btn,footer,.lab-page-header a{display:none!important}body{background:white!important;color:#111!important}.lab-card,.summary-section,.lab-full-section,.urgency-banner{border:1px solid #ccc!important;background:#f9f9f9!important}.patient-info-value,.summary-text,.test-name,.lab-section-body{color:#111!important}.test-value--normal,.test-value--low,.test-value--high,.test-value--critical{color:#333!important}}
+
+/* Animations — screen only */
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .anim-1{animation:fadeUp .45s ease both}
 .anim-2{animation:fadeUp .45s .08s ease both}
@@ -99,6 +113,363 @@
 .anim-5{animation:fadeUp .45s .32s ease both}
 .anim-6{animation:fadeUp .45s .40s ease both}
 .anim-7{animation:fadeUp .45s .48s ease both}
+
+
+/* ══════════════════════════════════════════════════════════
+   PRINT STYLES
+   Key fixes vs the broken version:
+   1. animation-fill-mode:both on anim classes was keeping
+      elements at opacity:0 during print — ALL animations
+      are killed with a blanket * rule FIRST.
+   2. page-break-inside:avoid on long sections (interpretation,
+      next-steps) prevented them from printing at all when they
+      spanned more than one page — removed from those sections.
+   3. Only SHORT sections that should never be split get avoid.
+   4. @page margins give proper A4 white space.
+══════════════════════════════════════════════════════════ */
+@media print {
+
+  @page {
+    size: A4 portrait;
+    margin: 20mm 15mm 22mm 15mm;
+  }
+
+  /* ── FIX 1: Kill ALL animations before anything else ──
+     animation-fill-mode:both was holding anim-* elements
+     at opacity:0 — this single rule is the most important fix. */
+  *, *::before, *::after {
+    animation: none !important;
+    animation-delay: 0s !important;
+    animation-duration: 0s !important;
+    animation-fill-mode: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
+
+  /* ── Hide UI chrome ── */
+  .navbar,
+  .lab-header-actions,
+  .lab-actions,
+  footer { display: none !important; }
+
+  /* ── Base ── */
+  html, body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-family: Georgia, 'Times New Roman', serif !important;
+    font-size: 10pt !important;
+    line-height: 1.55 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .lab-result-page {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* ── Report header ── */
+  .lab-page-header {
+    display: block !important;
+    border-bottom: 2.5pt solid #1E3A5F !important;
+    padding-bottom: 10pt !important;
+    margin-bottom: 16pt !important;
+  }
+  .lab-page-header::before {
+    content: "MEDICAL AI SYSTEM  ·  Laboratory Results Report";
+    display: block;
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: .18em;
+    color: #1E3A5F !important;
+    text-transform: uppercase;
+    margin-bottom: 5pt;
+    font-family: Arial, sans-serif !important;
+  }
+  .lab-page-header-left h1 {
+    font-size: 17pt !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin: 0 0 3pt !important;
+  }
+  .lab-page-header-left p {
+    font-size: 8pt !important;
+    color: #475569 !important;
+  }
+
+  /* ── Urgency banner — short, avoid split ── */
+  .urgency-banner {
+    display: flex !important;
+    border-radius: 5pt !important;
+    padding: 8pt 11pt !important;
+    margin-bottom: 13pt !important;
+    border-width: 1.5pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .urgency-banner--routine  { background: #f0fdf4 !important; border-color: #16a34a !important; color: #14532d !important; }
+  .urgency-banner--soon     { background: #fefce8 !important; border-color: #ca8a04 !important; color: #78350f !important; }
+  .urgency-banner--urgent   { background: #fff1f2 !important; border-color: #dc2626 !important; color: #7f1d1d !important; }
+  .urgency-banner--emergency{ background: #fff1f2 !important; border: 2pt solid #dc2626 !important; color: #7f1d1d !important; }
+  .urgency-text strong { font-size: 10pt !important; color: inherit !important; display: block; }
+  .urgency-text span   { font-size: 8pt !important;  color: inherit !important; opacity: .85; }
+  .urgency-icon { font-size: 1.2rem !important; }
+
+  /* ── Stats row — short, avoid split ── */
+  .lab-stats-row {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8pt !important;
+    margin-bottom: 13pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .lab-stat-card {
+    border-radius: 5pt !important;
+    padding: 9pt 8pt !important;
+    text-align: center !important;
+    border-width: 1pt !important;
+  }
+  .lab-stat-card--normal   { background: #f0fdf4 !important; border-color: #86efac !important; }
+  .lab-stat-card--abnormal { background: #fefce8 !important; border-color: #fde68a !important; }
+  .lab-stat-card--critical { background: #fff1f2 !important; border-color: #fca5a5 !important; }
+  .lab-stat-val   { font-size: 22pt !important; font-weight: 700 !important; }
+  .lab-stat-label { font-size: 7pt  !important; font-weight: 700 !important; }
+  .lab-stat-card--normal   .lab-stat-val   { color: #15803d !important; }
+  .lab-stat-card--abnormal .lab-stat-val   { color: #92400e !important; }
+  .lab-stat-card--critical .lab-stat-val   { color: #991b1b !important; }
+  .lab-stat-card--normal   .lab-stat-label { color: #166534 !important; }
+  .lab-stat-card--abnormal .lab-stat-label { color: #713f12 !important; }
+  .lab-stat-card--critical .lab-stat-label { color: #7f1d1d !important; }
+
+  /* ── Patient / Engine cards — short, avoid split ── */
+  .lab-layout {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8pt !important;
+    margin-bottom: 13pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .lab-card {
+    background: #f8fafc !important;
+    border: 1pt solid #cbd5e1 !important;
+    border-radius: 5pt !important;
+    overflow: visible !important;
+  }
+  .lab-card-header {
+    background: #f1f5f9 !important;
+    border-bottom: 1pt solid #cbd5e1 !important;
+    padding: 5pt 9pt !important;
+  }
+  .lab-card-header h3 {
+    font-size: 7.5pt !important;
+    color: #334155 !important;
+    font-family: Arial, sans-serif !important;
+  }
+  .lab-card-body { padding: 7pt 9pt !important; }
+  .patient-info-label { font-size: 6.5pt !important; color: #64748b !important; }
+  .patient-info-value { font-size: 8.5pt !important; color: #0f172a !important; font-weight: 600 !important; }
+
+  /* ── Summary — may be long, allow page break ── */
+  .summary-section {
+    background: #f5f3ff !important;
+    border: 1pt solid #a5b4fc !important;
+    border-radius: 5pt !important;
+    padding: 9pt 11pt !important;
+    margin-bottom: 13pt !important;
+    /* NO page-break-inside:avoid so long summaries print fully */
+  }
+  .summary-header h3 { font-size: 8.5pt !important; color: #3730a3 !important; font-family: Arial, sans-serif !important; }
+  .summary-text { font-size: 9.5pt !important; color: #1e1b4b !important; line-height: 1.65 !important; }
+
+  /* ── Results table — allow rows to break across pages ── */
+  .test-results-section {
+    margin-bottom: 13pt !important;
+    /* No avoid — tables can be very long */
+  }
+  .test-results-section > h3 {
+    font-size: 8.5pt !important;
+    color: #334155 !important;
+    margin-bottom: 5pt !important;
+    font-family: Arial, sans-serif !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  .test-results-section .lab-card {
+    overflow: visible !important;
+    border: none !important;
+    background: transparent !important;
+  }
+  .results-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    font-size: 8.5pt !important;
+  }
+  .results-table thead {
+    /* Repeat header on every page */
+    display: table-header-group !important;
+  }
+  .results-table thead th {
+    background: #1E3A5F !important;
+    color: #ffffff !important;
+    font-size: 7.5pt !important;
+    font-weight: 700 !important;
+    padding: 5pt 6pt !important;
+    text-align: left !important;
+    letter-spacing: .04em !important;
+    font-family: Arial, sans-serif !important;
+    border: none !important;
+  }
+  .results-table tbody tr {
+    background: #ffffff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .results-table tbody tr:nth-child(even) { background: #f8fafc !important; }
+  .results-table tbody td {
+    padding: 5pt 6pt !important;
+    border-bottom: .5pt solid #e2e8f0 !important;
+    vertical-align: middle !important;
+    border-radius: 0 !important;
+  }
+  .test-name { color: #0f172a !important; font-weight: 600 !important; font-size: 8.5pt !important; }
+  .test-ref  { color: #475569 !important; font-size: 7.5pt !important; }
+
+  .test-value           { font-size: 9pt !important; font-weight: 700 !important; font-family: 'Courier New', monospace !important; }
+  .test-value--normal   { color: #15803d !important; }
+  .test-value--low      { color: #92400e !important; }
+  .test-value--high     { color: #c2410c !important; }
+  .test-value--critical { color: #991b1b !important; }
+
+  .status-badge {
+    border-radius: 3pt !important;
+    padding: 1.5pt 5pt !important;
+    font-size: 7pt !important;
+    display: inline-flex !important;
+  }
+  .status-badge--normal   { background: #dcfce7 !important; color: #166534 !important; border-color: #86efac !important; }
+  .status-badge--low      { background: #fef9c3 !important; color: #713f12 !important; border-color: #fde047 !important; }
+  .status-badge--high     { background: #ffedd5 !important; color: #c2410c !important; border-color: #fb923c !important; }
+  .status-badge--critical { background: #fee2e2 !important; color: #991b1b !important; border-color: #fca5a5 !important; }
+
+  .significance-text { font-size: 7.5pt !important; color: #334155 !important; }
+
+  /* ── Full sections ──
+     FIX 2: NO page-break-inside:avoid on concerns/interpretation/next-steps.
+     These can be paragraphs long. Avoid only the header row. */
+  .lab-full-section {
+    border-radius: 5pt !important;
+    padding: 9pt 11pt !important;
+    margin-bottom: 11pt !important;
+    border-width: 1pt !important;
+    /* NO avoid here — allows long content to flow across pages */
+  }
+  .lab-full-section.concerns      { background: #fff1f2 !important; border-color: #fca5a5 !important; }
+  .lab-full-section.interpretation{ background: #f0f9ff !important; border-color: #7dd3fc !important; }
+  .lab-full-section.next-steps    { background: #f0fdf4 !important; border-color: #86efac !important; }
+
+  .lab-section-header {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    margin-bottom: 6pt !important;
+  }
+  .lab-section-header h3 {
+    font-size: 8.5pt !important;
+    font-family: Arial, sans-serif !important;
+  }
+  .concerns      .lab-section-header h3 { color: #991b1b !important; }
+  .interpretation .lab-section-header h3{ color: #0369a1 !important; }
+  .next-steps    .lab-section-header h3 { color: #166534 !important; }
+
+  .lab-section-body { font-size: 9pt !important; line-height: 1.65 !important; }
+  .concerns      .lab-section-body { color: #7f1d1d !important; }
+  .interpretation .lab-section-body{ color: #0c4a6e !important; }
+  .next-steps    .lab-section-body { color: #14532d !important; }
+
+  .concerns-list { display: flex !important; flex-direction: column !important; gap: 5pt !important; }
+  .concerns-list li {
+    display: flex !important;
+    gap: 6pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .concern-num {
+    width: 16pt !important; height: 16pt !important;
+    border-radius: 50% !important;
+    background: #fee2e2 !important;
+    border: 1pt solid #fca5a5 !important;
+    color: #991b1b !important;
+    font-size: 6.5pt !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  /* ── No findings note ── */
+  .no-findings-note {
+    background: #f8fafc !important;
+    border: 1pt solid #e2e8f0 !important;
+    border-radius: 5pt !important;
+    color: #334155 !important;
+    font-size: 9pt !important;
+    padding: 10pt !important;
+    text-align: center !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* ── Meta footer — short, avoid split ── */
+  .lab-meta-footer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4pt 14pt !important;
+    background: #f8fafc !important;
+    border: 1pt solid #e2e8f0 !important;
+    border-radius: 5pt !important;
+    padding: 7pt 10pt !important;
+    margin-bottom: 9pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .lab-meta-item { font-size: 7.5pt !important; }
+  .meta-key { color: #64748b !important; }
+  .meta-val { color: #0f172a !important; font-weight: 600 !important; }
+
+  /* ── Disclaimer — short, avoid split ── */
+  .lab-disclaimer {
+    background: #fffbeb !important;
+    border-left: 3pt solid #f59e0b !important;
+    border-radius: 0 4pt 4pt 0 !important;
+    color: #78350f !important;
+    font-size: 8pt !important;
+    padding: 7pt 10pt !important;
+    margin-bottom: 12pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* ── Auto print footer ── */
+  .lab-result-page::after {
+    content: "Generated by Medical AI System  ·  This report is for informational purposes only and does not constitute a medical diagnosis.  ·  All results must be reviewed by a licensed physician before any clinical decision is made.";
+    display: block;
+    margin-top: 18pt;
+    padding-top: 9pt;
+    border-top: 1pt solid #cbd5e1;
+    font-size: 7pt;
+    color: #94a3b8 !important;
+    text-align: center;
+    font-style: italic;
+    font-family: Arial, sans-serif !important;
+    line-height: 1.5;
+  }
+}
 </style>
 {% endblock %}
 
@@ -107,30 +478,30 @@
 
   <div class="lab-page-header anim-1">
     <div class="lab-page-header-left">
-      <h1>&#x1F9EA; Lab Results Analysis</h1>
-      <p>{{ record.original_filename }} &middot; Analyzed {{ record.analysis_date.strftime('%Y-%m-%d %H:%M') }}</p>
+      <h1>🧪 Lab Results Analysis</h1>
+      <p>{{ record.original_filename }} · Analyzed {{ record.analysis_date.strftime('%Y-%m-%d %H:%M') }}</p>
     </div>
     <div class="lab-header-actions">
       <a href="{{ url_for('lab.lab_upload') }}" class="btn btn-outline">+ New Analysis</a>
-      <a href="{{ url_for('lab.lab_history') }}" class="btn btn-ghost">&#x2190; Lab History</a>
-      <button onclick="window.print()" class="btn btn-ghost">Print</button>
+      <a href="{{ url_for('lab.lab_history') }}" class="btn btn-ghost">← Lab History</a>
+      <button onclick="window.print()" class="btn btn-ghost">🖨 Print Report</button>
     </div>
   </div>
 
   {% set urgency_lower = record.urgency.lower() %}
   <div class="urgency-banner urgency-banner--{{ urgency_lower }} anim-1">
     <span class="urgency-icon">
-      {% if record.urgency == 'EMERGENCY' %}&#x1F6A8;
-      {% elif record.urgency == 'URGENT' %}&#x26A0;&#xFE0F;
-      {% elif record.urgency == 'SOON' %}&#x1F514;
-      {% else %}&#x2705;{% endif %}
+      {% if record.urgency == 'EMERGENCY' %}🚨
+      {% elif record.urgency == 'URGENT' %}⚠️
+      {% elif record.urgency == 'SOON' %}🔔
+      {% else %}✅{% endif %}
     </span>
     <div class="urgency-text">
-      <strong>{{ record.urgency }} -
+      <strong>{{ record.urgency }} —
         {% if record.urgency == 'EMERGENCY' %}Seek immediate medical attention
-        {% elif record.urgency == 'URGENT' %}Consult your doctor within 24-48 hours
+        {% elif record.urgency == 'URGENT' %}Consult your doctor within 24–48 hours
         {% elif record.urgency == 'SOON' %}Schedule an appointment within 1 week
-        {% else %}No urgent action required - follow up at your next visit{% endif %}
+        {% else %}No urgent action required — follow up at your next visit{% endif %}
       </strong>
       <span>Based on AI analysis of the uploaded lab report</span>
     </div>
@@ -154,7 +525,7 @@
   <div class="lab-layout anim-3">
     <div class="lab-card">
       <div class="lab-card-header">
-        <span class="lab-card-header-icon">&#x1F464;</span>
+        <span class="lab-card-header-icon">👤</span>
         <h3>Patient Information</h3>
       </div>
       <div class="lab-card-body">
@@ -189,7 +560,7 @@
 
     <div class="lab-card">
       <div class="lab-card-header">
-        <span class="lab-card-header-icon">&#x1F916;</span>
+        <span class="lab-card-header-icon">🤖</span>
         <h3>Analysis Engine</h3>
       </div>
       <div class="lab-card-body">
@@ -220,7 +591,7 @@
   {% if record.summary %}
   <div class="summary-section anim-4">
     <div class="summary-header">
-      <span>&#x1F4CA;</span>
+      <span>📊</span>
       <h3>Summary of Findings</h3>
     </div>
     <div class="summary-text">{{ record.summary }}</div>
@@ -229,7 +600,7 @@
 
   {% if findings %}
   <div class="test-results-section anim-5">
-    <h3>&#x1F4CB; Individual Test Results</h3>
+    <h3>📋 Individual Test Results</h3>
     <div class="lab-card" style="overflow-x:auto;">
       <table class="results-table">
         <thead>
@@ -254,7 +625,7 @@
             <td><span class="test-ref">{{ f.reference_range }}</span></td>
             <td>
               <span class="status-badge status-badge--{{ status_lower }}">
-                {% if status_lower == 'normal' %}&#x2713;{% elif status_lower == 'critical' %}&#x1F6A8;{% elif status_lower == 'low' %}&#x2193;{% else %}&#x2191;{% endif %}
+                {% if status_lower == 'normal' %}✓{% elif status_lower == 'critical' %}!{% elif status_lower == 'low' %}↓{% else %}↑{% endif %}
                 {{ f.status }}
               </span>
             </td>
@@ -268,7 +639,7 @@
   {% else %}
   <div class="lab-card anim-5" style="margin-bottom:1.5rem;">
     <div class="no-findings-note">
-      <p>&#x1F4CB; Individual test values could not be parsed into a structured table.</p>
+      <p>📋 Individual test values could not be parsed into a structured table.</p>
       <p style="margin-top:.4rem;">See the interpretation section below for the full analysis.</p>
     </div>
   </div>
@@ -277,7 +648,7 @@
   {% if record.key_concerns %}
   <div class="lab-full-section concerns anim-5">
     <div class="lab-section-header">
-      <span>&#x1F534;</span>
+      <span>🔴</span>
       <h3>Key Concerns</h3>
     </div>
     <div class="lab-section-body">
@@ -304,7 +675,7 @@
   {% if record.interpretation %}
   <div class="lab-full-section interpretation anim-6">
     <div class="lab-section-header">
-      <span>&#x1F52C;</span>
+      <span>🔬</span>
       <h3>Clinical Interpretation</h3>
     </div>
     <div class="lab-section-body">{{ record.interpretation }}</div>
@@ -314,7 +685,7 @@
   {% if record.next_steps %}
   <div class="lab-full-section next-steps anim-6">
     <div class="lab-section-header">
-      <span>&#x2695;</span>
+      <span>⚕</span>
       <h3>Recommended Next Steps</h3>
     </div>
     <div class="lab-section-body">{{ record.next_steps }}</div>
@@ -330,14 +701,14 @@
   </div>
 
   <div class="lab-disclaimer anim-7">
-    &#x26A0; {{ record.disclaimer if record.disclaimer else "This analysis is for informational purposes only and does not constitute a medical diagnosis. Please consult your physician to interpret these results in the context of your overall health." }}
+    ⚠ {{ record.disclaimer if record.disclaimer else "This analysis is for informational purposes only and does not constitute a medical diagnosis. Please consult your physician to interpret these results in the context of your overall health." }}
   </div>
 
   <div class="lab-actions anim-7">
     <a href="{{ url_for('lab.lab_upload') }}" class="btn btn-primary">+ New Analysis</a>
     <a href="{{ url_for('lab.lab_history') }}" class="btn btn-outline">Lab History</a>
     <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Dashboard</a>
-    <button onclick="window.print()" class="btn btn-ghost">&#x1F5A8; Print Report</button>
+    <button onclick="window.print()" class="btn btn-ghost">🖨 Print Report</button>
     <form method="POST" action="{{ url_for('lab.lab_delete', result_id=record.id) }}"
           onsubmit="return confirm('Delete this lab result? This cannot be undone.')"
           style="display:inline;">

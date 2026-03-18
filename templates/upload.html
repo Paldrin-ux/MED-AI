@@ -104,8 +104,16 @@
         <span class="step-num">2</span>
         <span class="step-label">Upload Your Scan or..</span>
       </div>
+
       <div class="camera-section">
-        <button type="button" id="cameraBtn" class="btn btn-ghost btn-sm">&#x1F4F7; Capture from Camera</button>
+        <!-- Mobile: opens native camera app directly (rear camera) -->
+        <button type="button" id="mobileCameraBtn" class="btn btn-ghost btn-sm mobile-only">
+          &#x1F4F7; Take Photo with Camera
+        </button>
+        <!-- Desktop: webcam stream -->
+        <button type="button" id="cameraBtn" class="btn btn-ghost btn-sm desktop-only">
+          &#x1F4F7; Capture from Camera
+        </button>
         <video id="cameraVideo" class="hidden" autoplay playsinline></video>
         <canvas id="cameraCanvas" class="hidden"></canvas>
         <button type="button" id="captureBtn" class="btn btn-sm btn-primary hidden">Take Photo</button>
@@ -127,9 +135,16 @@
         </span>
       </div>
 
+      <!-- Main file input (gallery / file browser) -->
       <input type="file" id="fileInput" name="file"
              accept=".png,.jpg,.jpeg,.dcm,.nii,.gz,application/dicom"
              class="file-input-hidden" required
+             style="position:absolute;left:-9999px;opacity:0;pointer-events:none;"/>
+
+      <!-- Mobile camera input — capture="environment" opens rear camera natively -->
+      <input type="file" id="cameraInput"
+             accept="image/*"
+             capture="environment"
              style="position:absolute;left:-9999px;opacity:0;pointer-events:none;"/>
 
       <div id="previewSection" class="preview-section hidden">
@@ -302,17 +317,17 @@
 <script>
 (function () {
 
-  var fileInput  = document.getElementById('fileInput');
-  var dropZone   = document.getElementById('dropZone');
-  var submitBtn  = document.getElementById('submitBtn');
-  var uploadForm = document.getElementById('uploadForm');
-  var _realClick = fileInput.click.bind(fileInput);
+  var fileInput    = document.getElementById('fileInput');
+  var cameraInput  = document.getElementById('cameraInput');
+  var dropZone     = document.getElementById('dropZone');
+  var submitBtn    = document.getElementById('submitBtn');
+  var uploadForm   = document.getElementById('uploadForm');
+  var _realClick   = fileInput.click.bind(fileInput);
 
-  /* terms modal (view-only, no accept needed) */
+  /* ── Terms modal ── */
   window.closeTermsModal = function () {
     document.getElementById('termsOverlay').style.display = 'none';
   };
-
   var termsLink = document.getElementById('termsLink');
   if (termsLink) {
     termsLink.addEventListener('click', function (e) {
@@ -321,13 +336,12 @@
     });
   }
 
-  /* drop zone */
+  /* ── Drop zone ── */
   if (dropZone) {
     dropZone.addEventListener('click', function (e) {
       e.stopImmediatePropagation();
       _realClick();
     }, true);
-
     dropZone.addEventListener('dragover', function (e) {
       e.preventDefault();
       dropZone.classList.add('drag-over');
@@ -347,11 +361,27 @@
     });
   }
 
-  /* camera */
+  /* ── Mobile camera button — opens native rear camera ── */
+  var mobileCameraBtn = document.getElementById('mobileCameraBtn');
+  if (mobileCameraBtn && cameraInput) {
+    mobileCameraBtn.addEventListener('click', function () {
+      cameraInput.click();
+    });
+    /* When user takes a photo, copy it into the main fileInput */
+    cameraInput.addEventListener('change', function () {
+      if (!this.files.length) return;
+      var dt = new DataTransfer();
+      dt.items.add(this.files[0]);
+      fileInput.files = dt.files;
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  /* ── Desktop webcam button ── */
   var cameraBtn = document.getElementById('cameraBtn');
   if (cameraBtn) {
     cameraBtn.addEventListener('click', function () {
-      var video = document.getElementById('cameraVideo');
+      var video      = document.getElementById('cameraVideo');
       var captureBtn = document.getElementById('captureBtn');
       navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
         .then(function (stream) {
@@ -363,7 +393,33 @@
     });
   }
 
-  /* modality cards */
+  /* ── Desktop webcam capture ── */
+  var captureBtn = document.getElementById('captureBtn');
+  if (captureBtn) {
+    captureBtn.addEventListener('click', function () {
+      var video  = document.getElementById('cameraVideo');
+      var canvas = document.getElementById('cameraCanvas');
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      canvas.toBlob(function (blob) {
+        var file = new File([blob], 'camera-capture.png', { type: 'image/png' });
+        var dt   = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        /* Stop the stream */
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(function (t) { t.stop(); });
+          video.srcObject = null;
+        }
+        video.classList.add('hidden');
+        captureBtn.classList.add('hidden');
+      }, 'image/png');
+    });
+  }
+
+  /* ── Modality cards ── */
   document.querySelectorAll('.modality-card input[type=radio]').forEach(function (radio) {
     radio.addEventListener('change', function () {
       document.querySelectorAll('.modality-card').forEach(function (c) { c.classList.remove('selected'); });
@@ -372,41 +428,47 @@
     });
   });
 
-  /* file change */
+  /* ── File change handler (shared by fileInput and cameraInput→fileInput) ── */
   if (fileInput) {
     fileInput.addEventListener('change', function () {
       checkSubmitReady();
-      if (this.files.length > 0) {
-        var f = this.files[0];
-        var ext = f.name.split('.').pop().toLowerCase();
-        var sizeKB = (f.size / 1024).toFixed(1);
-        var dropTitle = dropZone && dropZone.querySelector('.drop-title');
-        var dropSub   = dropZone && dropZone.querySelector('.drop-sub');
-        if (dropTitle) dropTitle.textContent = '\u2705 ' + f.name;
-        if (dropSub)   dropSub.textContent   = ext.toUpperCase() + ' \xB7 ' + sizeKB + ' KB';
+      if (!this.files.length) return;
+      var f      = this.files[0];
+      var ext    = f.name.split('.').pop().toLowerCase();
+      var sizeKB = (f.size / 1024).toFixed(1);
 
-        var previewSection = document.getElementById('previewSection');
-        var previewImg = document.getElementById('previewImg');
-        var previewMeta = document.getElementById('previewMeta');
-        if (['png','jpg','jpeg'].indexOf(ext) !== -1 && previewSection && previewImg) {
-          var reader = new FileReader();
-          reader.onload = function(ev) { previewImg.src = ev.target.result; previewSection.classList.remove('hidden'); };
-          reader.readAsDataURL(f);
-        } else if (previewSection) {
-          previewSection.classList.add('hidden');
-        }
-        if (previewMeta) previewMeta.innerHTML = '<strong>' + f.name + '</strong> &middot; ' + ext.toUpperCase() + ' &middot; ' + sizeKB + ' KB';
+      var dropTitle = dropZone && dropZone.querySelector('.drop-title');
+      var dropSub   = dropZone && dropZone.querySelector('.drop-sub');
+      if (dropTitle) dropTitle.textContent = '\u2705 ' + f.name;
+      if (dropSub)   dropSub.textContent   = ext.toUpperCase() + ' \xB7 ' + sizeKB + ' KB';
+
+      var previewSection = document.getElementById('previewSection');
+      var previewImg     = document.getElementById('previewImg');
+      var previewMeta    = document.getElementById('previewMeta');
+
+      if (['png','jpg','jpeg'].indexOf(ext) !== -1 && previewSection && previewImg) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          previewImg.src = ev.target.result;
+          previewSection.classList.remove('hidden');
+        };
+        reader.readAsDataURL(f);
+      } else if (previewSection) {
+        previewSection.classList.add('hidden');
+      }
+      if (previewMeta) {
+        previewMeta.innerHTML = '<strong>' + f.name + '</strong> &middot; ' + ext.toUpperCase() + ' &middot; ' + sizeKB + ' KB';
       }
     });
   }
 
   function checkSubmitReady() {
     var modalityOk = !!document.querySelector('.modality-card input[type=radio]:checked');
-    var fileOk = fileInput && fileInput.files.length > 0;
+    var fileOk     = fileInput && fileInput.files.length > 0;
     if (submitBtn) submitBtn.disabled = !(modalityOk && fileOk);
   }
 
-  /* analysing steps */
+  /* ── Analysing steps animation ── */
   function runSteps() {
     var steps  = ['astep1','astep2','astep3','astep4'];
     var delays = [0, 1200, 3500, 7000];
@@ -426,7 +488,7 @@
     });
   }
 
-  /* form submit */
+  /* ── Form submit ── */
   if (uploadForm) {
     uploadForm.addEventListener('submit', function (e) {
       if (!fileInput || !fileInput.files.length) { e.preventDefault(); return; }
@@ -437,7 +499,10 @@
       if (bar && fill) {
         bar.classList.remove('hidden');
         var pct = 0;
-        setInterval(function () { pct = Math.min(pct + (Math.random()*4+1), 90); fill.style.width = pct+'%'; }, 600);
+        setInterval(function () {
+          pct = Math.min(pct + (Math.random() * 4 + 1), 90);
+          fill.style.width = pct + '%';
+        }, 600);
       }
     });
   }
@@ -448,20 +513,28 @@
 <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
 
 <style>
-/* Step indicators */
+/* ── Mobile / Desktop camera button visibility ── */
+.mobile-only  { display: none; }
+.desktop-only { display: inline-flex; }
+@media (max-width: 768px) {
+  .mobile-only  { display: inline-flex; }
+  .desktop-only { display: none; }
+}
+
+/* ── Step indicators ── */
 .step-indicator{display:flex;align-items:center;gap:.65rem;margin:1.5rem 0 .75rem}
 .step-indicator--2{margin-top:1.75rem}
 .step-indicator--3{margin-top:1rem}
 .step-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 4px rgba(99,102,241,.2)}
 .step-label{font-size:.88rem;font-weight:700;color:#e2e8f0;letter-spacing:.02em}
 
-/* Consent bar */
+/* ── Consent bar ── */
 .consent-bar{display:flex;align-items:flex-start;gap:.65rem;margin:.75rem 0 1rem;padding:.85rem 1rem;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;font-size:.78rem;color:#94a3b8;line-height:1.6}
 .consent-icon{font-size:1rem;flex-shrink:0;margin-top:.1rem}
 .consent-link{color:#a5b4fc;font-weight:600;text-decoration:none;border-bottom:1px dashed rgba(165,180,252,.4);transition:color .2s,border-color .2s}
 .consent-link:hover{color:#c7d2fe;border-bottom-color:rgba(199,210,254,.7)}
 
-/* Modality */
+/* ── Modality grid ── */
 .modality-section{margin-bottom:.5rem}
 .modality-hint{font-size:.78rem;color:var(--text-muted,#94a3b8);margin-bottom:.75rem}
 .modality-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
@@ -478,7 +551,7 @@
 .info-card--ai h3{color:#a5b4fc}
 .drop-zone.drag-over{border-color:#6366f1!important;background:rgba(99,102,241,.1)!important;transform:scale(1.01)}
 
-/* Terms modal */
+/* ── Terms modal ── */
 .terms-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem}
 .terms-modal{background:var(--bg-card,#1e293b);border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden}
 .terms-modal__header{display:flex;align-items:flex-start;gap:.875rem;padding:1.25rem 1.5rem 1rem;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
@@ -501,7 +574,7 @@
 .fmtpick-close{background:none;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text-muted,#94a3b8);font-size:.9rem;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .fmtpick-close:hover{background:rgba(255,255,255,.08);color:#e2e8f0}
 
-/* Analysing overlay */
+/* ── Analysing overlay ── */
 .analysing-overlay{position:fixed;inset:0;z-index:900;background:rgba(10,14,26,.93);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1.5rem}
 .analysing-box{display:flex;flex-direction:column;align-items:center;gap:1.25rem;text-align:center;max-width:340px;width:100%}
 .analysing-spinner{position:relative;width:90px;height:90px;flex-shrink:0}
@@ -522,6 +595,8 @@
 .astep-dot--done{background:#22c55e;font-size:.65rem;width:16px;height:16px;color:#fff}
 @keyframes dotPulse{0%,100%{box-shadow:0 0 0 3px rgba(99,102,241,.3)}50%{box-shadow:0 0 0 6px rgba(99,102,241,.15)}}
 .analysing-note{font-size:.73rem;color:var(--text-muted,#94a3b8);opacity:.65;margin:0}
+
+/* ── Responsive ── */
 @media(max-width:600px){.modality-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 {% endblock %}
