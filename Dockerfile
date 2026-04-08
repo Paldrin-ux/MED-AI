@@ -22,7 +22,6 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
-# Ensure Flask-Migrate is included
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt Flask-Migrate==4.0.7
 
@@ -38,7 +37,7 @@ USER medai
 # Environment
 ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
-ENV PORT=10000 
+ENV PORT=10000
 
 EXPOSE 10000
 
@@ -46,6 +45,5 @@ EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:10000/ai/health')" || exit 1
 
-# THE FIX: We use "app:app" but Gunicorn handles this by looking for app.py
-# If this fails one more time, we will rename your app.py to main.py to stop the conflict.
-CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--workers", "1", "--threads", "2", "--timeout", "120", "app:app"]
+# FIXED: Use wsgi:app to avoid collision with app/ folder
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--workers", "1", "--threads", "2", "--timeout", "120", "wsgi:app"]
