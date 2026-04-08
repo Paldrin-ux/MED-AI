@@ -29,6 +29,8 @@ class Config:
     # AI Model
     MODEL_PATH = os.path.join(BASE_DIR, "app", "ai", "weights")
     INFERENCE_DEVICE = "cpu"  # "cuda" if GPU available
+    USER_SCAN_LIMIT = int(os.environ.get("USER_SCAN_LIMIT", 5))
+    USER_LAB_SCAN_LIMIT = int(os.environ.get("USER_LAB_SCAN_LIMIT", 5))
 
 class DevelopmentConfig(Config):
     DEBUG = True

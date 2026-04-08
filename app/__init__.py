@@ -4,12 +4,16 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
+from dotenv import load_dotenv
 from config import config_map
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 bcrypt = Bcrypt()
 migrate = Migrate()
+
+# Ensure .env is loaded even when starting via `flask run`.
+load_dotenv()
 
 
 def create_app(env: str = "default") -> Flask:

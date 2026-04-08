@@ -15,6 +15,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,15 @@ GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
 def allowed_lab_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_LAB_EXTENSIONS
+
+
+def _remaining_lab_scan_slots(user_id: int) -> tuple[int, int]:
+    from app.database.models import LabResult
+
+    limit = Config.USER_LAB_SCAN_LIMIT
+    used = LabResult.query.filter_by(user_id=user_id).count()
+    remaining = max(limit - used, 0)
+    return remaining, limit
 
 
 def encode_file_base64(file_path):
@@ -220,6 +230,14 @@ def parse_lab_response(text: str, model: str) -> dict:
 @login_required
 def lab_upload():
     if request.method == "POST":
+        remaining, limit = _remaining_lab_scan_slots(current_user.id)
+        if remaining <= 0:
+            flash(
+                f"You reached your lab scan limit ({limit}). Please contact admin to increase your plan.",
+                "warning",
+            )
+            return redirect(request.url)
+
         if "lab_file" not in request.files:
             flash("No file selected.", "danger")
             return redirect(request.url)

@@ -28,6 +28,10 @@
   <div>
     <h1 class="page-title">Dashboard</h1>
     <p class="page-sub">Welcome, <strong>{{ current_user.name }}</strong> · {{ current_user.role.capitalize() }}</p>
+    <p class="page-sub">
+      Scans: {{ stats.scan_used }}/{{ stats.scan_limit }} used ·
+      Lab: {{ stats.lab_used }}/{{ stats.lab_limit }} used
+    </p>
   </div>
   <!-- Desktop buttons — hidden on mobile (bottom nav handles mobile) -->
   <div class="header-actions desktop-only">
@@ -52,6 +56,16 @@
     <div class="stat-icon">&#x1F6A8;</div>
     <div class="stat-value">{{ stats.high_priority }}</div>
     <div class="stat-label">High Priority</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">&#x1F4CA;</div>
+    <div class="stat-value">{{ stats.scan_remaining }}/{{ stats.scan_limit }}</div>
+    <div class="stat-label">Scan Slots Left</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">&#x1F9EA;</div>
+    <div class="stat-value">{{ stats.lab_remaining }}/{{ stats.lab_limit }}</div>
+    <div class="stat-label">Lab Slots Left</div>
   </div>
 </div>
 

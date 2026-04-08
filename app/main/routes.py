@@ -9,6 +9,7 @@ from app.ai.tcia_service import get_tcia_reference_cases, is_tcia_available
 import uuid
 from datetime import datetime
 from app.ai.references import get_references
+from config import Config
 
 main_bp = Blueprint("main", __name__)
 
@@ -46,6 +47,13 @@ def allowed_file(filename: str) -> bool:
     return ext in ALLOWED_EXTENSIONS
 
 
+def _remaining_scan_slots(user_id: int) -> tuple[int, int]:
+    limit = Config.USER_SCAN_LIMIT
+    used = Upload.query.filter_by(user_id=user_id).count()
+    remaining = max(limit - used, 0)
+    return remaining, limit
+
+
 def detect_modality(filename: str, scan_type: str = "general") -> str:
     if scan_type and scan_type != "general":
         return SCAN_TYPE_TO_MODALITY.get(scan_type, "Unknown")
@@ -76,8 +84,15 @@ def dashboard():
         .limit(10)
         .all()
     )
+    from app.database.models import LabResult
+
+    used_scan = Upload.query.filter_by(user_id=current_user.id).count()
+    used_lab = LabResult.query.filter_by(user_id=current_user.id).count()
+    scan_limit = Config.USER_SCAN_LIMIT
+    lab_limit = Config.USER_LAB_SCAN_LIMIT
+
     stats = {
-        "total": Upload.query.filter_by(user_id=current_user.id).count(),
+        "total": used_scan,
         "high_priority": db.session.query(Prediction)
             .join(Upload)
             .filter(Upload.user_id == current_user.id, Prediction.priority == "HIGH")
@@ -86,6 +101,12 @@ def dashboard():
             .join(Upload)
             .filter(Upload.user_id == current_user.id)
             .count(),
+        "scan_limit": scan_limit,
+        "scan_used": used_scan,
+        "scan_remaining": max(scan_limit - used_scan, 0),
+        "lab_limit": lab_limit,
+        "lab_used": used_lab,
+        "lab_remaining": max(lab_limit - used_lab, 0),
     }
     return render_template("dashboard.html", uploads=uploads, stats=stats)
 
@@ -94,6 +115,14 @@ def dashboard():
 @login_required
 def upload():
     if request.method == "POST":
+        remaining, limit = _remaining_scan_slots(current_user.id)
+        if remaining <= 0:
+            flash(
+                f"You reached your scan limit ({limit}). Please contact admin to increase your plan.",
+                "warning",
+            )
+            return redirect(request.url)
+
         if "file" not in request.files:
             flash("No file part in request.", "danger")
             return redirect(request.url)

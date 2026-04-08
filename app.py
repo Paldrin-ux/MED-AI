@@ -1,8 +1,9 @@
 import os
-os.environ["GEMINI_API_KEY"] = "AIzaSyByMFTnNuYhzuXjiMR2TSiCAwG1kyjo_po"
-from app import create_app
 from dotenv import load_dotenv
+
+# Load .env before importing app factory so all modules see env vars.
 load_dotenv()
+from app import create_app
 app = create_app(os.environ.get("FLASK_ENV", "development"))
 
 import json
