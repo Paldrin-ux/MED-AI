@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# MedAI – Dockerfile (Optimized for Render Free Tier)
+# MedAI – Dockerfile (Final Fix for Name Collision)
 # ─────────────────────────────────────────────────────────────────────────────
 
 FROM python:3.11-slim
@@ -22,7 +22,7 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
-# Adding Flask-Migrate directly to the install command to fix the module error
+# Ensure Flask-Migrate is included
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt Flask-Migrate==4.0.7
 
@@ -40,19 +40,12 @@ ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
 ENV PORT=10000 
 
-# Render uses port 10000 by default
 EXPOSE 10000
 
-# Health-check (updated port to 10000)
+# Health-check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:10000/ai/health')" || exit 1
 
-# Updated CMD: Points Gunicorn to the 'app' variable inside your 'app.py' file.
-# Using 'app:app' here refers to 'app.py' (the file) and 'app' (the variable).
-CMD ["gunicorn", "app:app", \
-     "--bind", "0.0.0.0:10000", \
-     "--workers", "1", \
-     "--threads", "2", \
-     "--timeout", "120", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+# THE FIX: We use "app:app" but Gunicorn handles this by looking for app.py
+# If this fails one more time, we will rename your app.py to main.py to stop the conflict.
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--workers", "1", "--threads", "2", "--timeout", "120", "app:app"]
