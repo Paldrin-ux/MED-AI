@@ -22,7 +22,7 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
-# Adding Flask-Migrate directly to the install command to fix the crash
+# Adding Flask-Migrate directly to the install command to fix the module error
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt Flask-Migrate==4.0.7
 
@@ -40,14 +40,15 @@ ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
 ENV PORT=10000 
 
-# Render uses port 10000 by default, EXPOSE 5000 is usually ignored but we'll set it to 10000
+# Render uses port 10000 by default
 EXPOSE 10000
 
 # Health-check (updated port to 10000)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:10000/ai/health')" || exit 1
 
-# Production: Lowered workers to 1 to save RAM on Render Free Tier
+# Updated CMD: Points Gunicorn to the 'app' variable inside your 'app.py' file.
+# Using 'app:app' here refers to 'app.py' (the file) and 'app' (the variable).
 CMD ["gunicorn", "app:app", \
      "--bind", "0.0.0.0:10000", \
      "--workers", "1", \
