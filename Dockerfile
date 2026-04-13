@@ -30,7 +30,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy application source
 COPY --chown=medai:medai . .
 
-# Create directories and FORCE permissions so the app can save uploaded images
+# CRITICAL: Create directories and set open permissions for file uploads
 RUN mkdir -p instance app/uploads app/ai/weights \
     && chmod -R 777 /app/instance /app/app/uploads /app/app/ai/weights \
     && chown -R medai:medai /app
