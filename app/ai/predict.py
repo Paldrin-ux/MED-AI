@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 VISION_SUPPORTED = {"png", "jpg", "jpeg", "dcm", "nii", "gz", "nii.gz"}
 
-GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1/models"
 
 # ✅ FIXED ORDER: stable models first, 2.5-flash last (high demand / often 503)
 GEMINI_MODELS = [
