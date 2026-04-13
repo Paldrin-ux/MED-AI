@@ -1,10 +1,11 @@
 """
-app/ai/predict.py  —  Medical AI Inference Pipeline  (v2.2)
+app/ai/predict.py  —  Medical AI Inference Pipeline  (v2.3)
 
-Fix in v2.2 vs v2.1:
-  NeuroimagingValidator.validate() now uses a negated() helper so that
-  sentences like "no evidence of compressed sulci" do NOT falsely trigger
-  the hydrocephalus rule correction.
+Fix in v2.3 vs v2.2:
+  - GEMINI_MODELS reordered: stable models first, 2.5-flash as bonus fallback
+  - HTTP 503 (UNAVAILABLE) now triggers model fallback instead of hard crash
+  - Added gemini-1.5-pro as high-accuracy fallback for complex scans
+  - Timeout increased to 45s for larger image payloads
 """
 
 import os
@@ -29,13 +30,20 @@ logger = logging.getLogger(__name__)
 VISION_SUPPORTED = {"png", "jpg", "jpeg", "dcm", "nii", "gz", "nii.gz"}
 
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+
+# ✅ FIXED ORDER: stable models first, 2.5-flash last (high demand / often 503)
 GEMINI_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-2.0-flash-001",
-    "gemini-2.0-flash-lite-001",
+    "gemini-1.5-flash",           # stable, fast, excellent vision
+    "gemini-1.5-pro",             # higher accuracy for complex scans
+    "gemini-2.0-flash",           # newer, usually available
+    "gemini-2.0-flash-lite",      # lightweight fallback
+    "gemini-2.0-flash-001",       # versioned fallback
+    "gemini-2.0-flash-lite-001",  # last resort before 2.5
+    "gemini-2.5-flash",           # often overloaded — try last
 ]
+
+# HTTP codes that should trigger next model (not hard crash)
+RETRYABLE_CODES = {429, 503, 500, 502, 504}
 
 DIFFERENTIAL_THRESHOLD = 0.70
 
@@ -514,33 +522,18 @@ class NeuroimagingValidator:
 
     @classmethod
     def _is_negated(cls, keyword: str, text: str) -> bool:
-        """
-        Returns True if the keyword appears in the text but is preceded by
-        a negation word within 50 characters, meaning its meaning is reversed.
-
-        Example:
-            "no evidence of compressed sulci"  → negated  → True
-            "compressed sulci are present"     → not negated → False
-        """
         idx = text.find(keyword)
         if idx == -1:
             return False
-        # Look at the 60 characters immediately before the keyword
         window = text[max(0, idx - 60): idx]
         return bool(cls._NEGATION_PATTERN.search(window))
 
     @classmethod
     def _keyword_active(cls, keyword: str, text: str) -> bool:
-        """True if keyword is present AND not negated."""
         return keyword in text and not cls._is_negated(keyword, text)
 
     @classmethod
     def validate(cls, result: dict, scan_type: str) -> dict:
-        """
-        Applies rules to result dict.
-        Returns the same dict with label/confidence possibly corrected
-        and validation_notes populated.
-        """
         if scan_type not in ("brain_mri", "ct_scan", "general"):
             result.setdefault("validation_notes", "")
             result["disclaimer"] = SAFETY_DISCLAIMER
@@ -906,7 +899,7 @@ def _call_gemini_vision(file_path: str, ext: str, scan_type: str = "general") ->
                 method="POST",
             )
             try:
-                with urllib.request.urlopen(req, timeout=30) as resp:
+                with urllib.request.urlopen(req, timeout=45) as resp:  # ✅ increased timeout
                     raw  = json.loads(resp.read().decode("utf-8"))
                 text   = raw["candidates"][0]["content"]["parts"][0]["text"].strip()
                 result = _extract_result(text, model)
@@ -914,16 +907,23 @@ def _call_gemini_vision(file_path: str, ext: str, scan_type: str = "general") ->
                 if result["result_label"] in TREATMENT_MAP and not result.get("recommendation"):
                     result["recommendation"] = TREATMENT_MAP[result["result_label"]]
 
+                logger.info(f"✅ Success with model: {model}")
                 return result
 
             except urllib.error.HTTPError as e:
                 body       = e.read().decode("utf-8")
                 last_error = f"{model} HTTP {e.code}: {body[:200]}"
-                if e.code in (429, 404):
+                logger.warning(f"Model {model} failed with HTTP {e.code} — trying next")
+
+                # ✅ FIXED: 503 now triggers fallback instead of hard crash
+                if e.code in RETRYABLE_CODES:
                     continue
+                # Only hard-crash on auth errors (401, 403) or bad request (400)
                 raise RuntimeError(last_error)
+
             except Exception as ex:
                 last_error = f"{model}: {ex}"
+                logger.warning(f"Model {model} exception: {ex} — trying next")
                 continue
 
     raise RuntimeError(f"All Gemini models exhausted. Last error: {last_error}")
@@ -1063,7 +1063,7 @@ def run_inference(
         validation_notes = val_notes,
         disclaimer       = disclaimer,
         analysis_date    = datetime.utcnow(),
-        model_version    = "gemini-vision-v2.2",
+        model_version    = "gemini-vision-v2.3",
     )
 
 
