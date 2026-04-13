@@ -2,7 +2,7 @@
 // Handles: drag-drop, file preview, AJAX form submission with progress bar, camera capture
 
 (function () {
-  const dropZone    = document.getElementById('dropZone');
+  const dropZone     = document.getElementById('dropZone');
   const fileInput   = document.getElementById('fileInput');
   const form        = document.getElementById('uploadForm');
   const submitBtn   = document.getElementById('submitBtn');
@@ -42,7 +42,6 @@
     const allowed = ['image/png','image/jpeg','image/jpg'];
     const isImage = allowed.includes(file.type);
 
-    // Preview (images only)
     if (isImage) {
       const reader = new FileReader();
       reader.onload = e => {
@@ -55,11 +54,9 @@
       previewSec.classList.add('hidden');
     }
 
-    // Meta
     previewMeta.textContent = `${file.name}  ·  ${(file.size / 1024).toFixed(1)} KB  ·  ${file.type || 'binary'}`;
     submitBtn.disabled = false;
 
-    // Sync with hidden input if dropped
     const dt = new DataTransfer();
     dt.items.add(file);
     fileInput.files = dt.files;
@@ -77,7 +74,6 @@
     const formData = new FormData(form);
     const xhr = new XMLHttpRequest();
 
-    // Show progress bar
     progressWrap.classList.remove('hidden');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Uploading…';
@@ -90,19 +86,29 @@
       }
     });
 
+    // FIXED REDIRECT LOGIC
     xhr.addEventListener('load', () => {
-      if (xhr.responseURL) {
-        progressLbl.textContent = 'Complete! Redirecting…';
-        progressFill.style.width = '100%';
-        window.location.href = xhr.responseURL;
+      if (xhr.status >= 200 && xhr.status < 400) {
+        // If the server redirected us to a results page
+        if (xhr.responseURL && xhr.responseURL !== window.location.href) {
+          progressLbl.textContent = 'Complete! Redirecting…';
+          progressFill.style.width = '100%';
+          window.location.href = xhr.responseURL;
+        } else {
+          // Fallback if no redirect URL is detected but status is OK
+          progressLbl.textContent = 'Scan processed. Check your history.';
+          setTimeout(() => { window.location.href = '/dashboard'; }, 2000);
+        }
       } else {
-        progressLbl.textContent = 'Done!';
-        window.location.reload();
+        progressLbl.textContent = 'Error: ' + xhr.status;
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🔬 Analyse Scan';
+        console.error('Server error during scan:', xhr.responseText);
       }
     });
 
     xhr.addEventListener('error', () => {
-      progressLbl.textContent = 'Upload failed. Please try again.';
+      progressLbl.textContent = 'Upload failed. Please check connection.';
       submitBtn.disabled = false;
       submitBtn.textContent = '🔬 Analyse Scan';
     });
@@ -116,7 +122,6 @@
 
   cameraBtn.addEventListener('click', async () => {
     if (stream) {
-      // Stop camera
       stream.getTracks().forEach(t => t.stop());
       stream = null;
       cameraVideo.classList.add('hidden');
@@ -145,8 +150,8 @@
     cameraCanvas.toBlob(blob => {
       const file = new File([blob], `camera_capture_${Date.now()}.png`, { type: 'image/png' });
       handleFile(file);
-      // Stop camera after capture
-      stream.getTracks().forEach(t => t.stop()); stream = null;
+      stream.getTracks().forEach(t => t.stop()); 
+      stream = null;
       cameraVideo.classList.add('hidden');
       captureBtn.classList.add('hidden');
       cameraBtn.textContent = '📷 Capture from Camera';
