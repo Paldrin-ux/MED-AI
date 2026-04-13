@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# MedAI – Dockerfile (Final Fix for Name Collision)
+# MedAI – Dockerfile (Final Fix for Name Collision & Missing Dependencies)
 # ─────────────────────────────────────────────────────────────────────────────
 
 FROM python:3.11-slim
@@ -22,8 +22,10 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
+
+# Added requests and Flask-Migrate directly to ensure they are present
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt Flask-Migrate==4.0.7
+    && pip install --no-cache-dir -r requirements.txt Flask-Migrate==4.0.7 requests==2.31.0
 
 # Copy application source
 COPY --chown=medai:medai . .
@@ -45,5 +47,5 @@ EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:10000/ai/health')" || exit 1
 
-# FIXED: Use wsgi:app to avoid collision with app/ folder
+# FIXED: Points to wsgi.py which contains the 'app' variable
 CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--workers", "1", "--threads", "2", "--timeout", "120", "wsgi:app"]
