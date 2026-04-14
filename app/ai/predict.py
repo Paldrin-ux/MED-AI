@@ -33,13 +33,12 @@ GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1/models"
 
 # ✅ FIXED ORDER: stable models first, 2.5-flash last (high demand / often 503)
 GEMINI_MODELS = [
-    "gemini-1.5-flash",           # stable, fast, excellent vision
-    "gemini-1.5-pro",             # higher accuracy for complex scans
-    "gemini-2.0-flash",           # newer, usually available
-    "gemini-2.0-flash-lite",      # lightweight fallback
-    "gemini-2.0-flash-001",       # versioned fallback
-    "gemini-2.0-flash-lite-001",  # last resort before 2.5
-    "gemini-2.5-flash",           # often overloaded — try last
+    "gemini-2.0-flash",          # stable, fast, great vision
+    "gemini-2.0-flash-001",      # versioned stable fallback
+    "gemini-2.0-flash-lite",     # lightweight fallback
+    "gemini-2.0-flash-lite-001", # another stable fallback
+    "gemini-2.5-flash-lite",     # newer lite fallback
+    "gemini-2.5-flash",          # try last — often overloaded
 ]
 
 # HTTP codes that should trigger next model (not hard crash)
