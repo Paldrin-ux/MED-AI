@@ -12,30 +12,41 @@
 <div class="upload-layout">
 
   <div class="upload-panel">
+    {# Accept lab_files[] (multi) — the route also falls back to the old lab_file field #}
     <form id="labForm" method="POST" action="{{ url_for('lab.lab_upload') }}" enctype="multipart/form-data">
 
+      {# ── Drop zone ── #}
       <div id="dropZone" class="drop-zone" style="cursor:pointer;">
         <div class="drop-icon">&#x2B06;</div>
-        <p class="drop-title">Drop your lab report here</p>
-        <p class="drop-sub">or click to browse</p>
+        <p class="drop-title">Drop lab reports here</p>
+        <p class="drop-sub">or click to browse — up to 10 files at once</p>
         <p class="drop-formats">PDF &middot; PNG &middot; JPG &middot; DOCX &middot; TXT &middot; CSV</p>
       </div>
 
-      <input type="file" id="fileInput" name="lab_file"
+      {# Hidden multi-file input #}
+      <input type="file" id="fileInput" name="lab_files[]"
              accept=".pdf,.png,.jpg,.jpeg,.docx,.doc,.txt,.csv"
-             required
+             multiple
              style="position:absolute;left:-9999px;opacity:0;pointer-events:none;"/>
 
-      <div id="previewSection" class="preview-section hidden">
-        <img id="previewImg" src="" alt="Preview" class="preview-img"/>
-        <div id="previewMeta" class="preview-meta"></div>
+      {# ── File chip list (shown after selection) ── #}
+      <div id="fileList" class="file-list hidden"></div>
+
+      {# ── Multi-panel info badge (shows when > 1 file) ── #}
+      <div id="multiPanelBadge" class="multi-panel-badge hidden">
+        <span class="mpb-icon">&#x1F9EC;</span>
+        <div class="mpb-text">
+          <strong id="mpbCount">0 panels selected</strong>
+          <span>AI will analyse each panel separately, then synthesise cross-panel diagnoses</span>
+        </div>
       </div>
 
+      {# ── Progress bar ── #}
       <div id="progressBar" class="progress-bar-wrap hidden">
         <div class="progress-bar-track">
           <div id="progressFill" class="progress-bar-fill" style="width:0%"></div>
         </div>
-        <span id="progressLabel" class="progress-label">Analysing with Gemini Vision AI…&#x2026;</span>
+        <span id="progressLabel" class="progress-label">Analysing with Gemini Vision AI&hellip;</span>
       </div>
 
       <button type="submit" id="submitBtn" class="btn btn-primary btn-full" disabled>
@@ -46,30 +57,43 @@
   </div>
 
   <div class="upload-info">
+
     <div class="info-card info-card--ai">
-      <h3>&#x1F916; AI Engine</h3>
-      <p>Powered by <strong>Gemini Vision AI</strong> — reads and interprets CBC, metabolic panels, thyroid, lipids, urinalysis, cultures, and more in plain English.</p>
+      <h3>&#x1F916; Multi-Panel AI Engine</h3>
+      <p>Powered by <strong>Gemini Vision AI</strong> — upload <em>multiple</em> panels at once.
+         The AI reads each one, then synthesises a <strong>combined clinical diagnosis</strong>
+         across all panels (e.g. CBC + HbA1c + Lipids → Type 2 Diabetes with Dyslipidemia).</p>
     </div>
 
     <div class="info-card">
       <h3>What Gets Analyzed</h3>
       <ul>
         <li>&#x1F9EA; Every individual test value vs reference range</li>
-        <li>&#x26A0;&#xFE0F; Abnormal and critical flags explained</li>
+        <li>&#x26A0;&#xFE0F; Abnormal and critical flags explained per panel</li>
+        <li>&#x1F9EC; Cross-panel synthesis: detect conditions spanning multiple tests</li>
         <li>&#x1F4CA; Overall health summary in plain language</li>
-        <li>&#x1F469;&#x200D;&#x2695;&#xFE0F; Ordering physician and facility info</li>
         <li>&#x1F6A8; Urgency level: Routine, Soon, Urgent, Emergency</li>
         <li>&#x2705; Recommended next steps and follow-ups</li>
       </ul>
     </div>
 
+    <div class="info-card info-card--tip">
+      <h3>&#x1F4A1; Multi-Panel Tip</h3>
+      <p>For best results, upload all panels from the same visit together —
+         e.g. your CBC, metabolic panel, and thyroid results.
+         The AI will correlate findings across all of them.</p>
+    </div>
+
     <div class="info-card info-card--warn">
       <h3>&#x26A0; Disclaimer</h3>
-      <p>AI analysis is for informational purposes only and does not constitute a medical diagnosis. Always consult your physician to interpret results in the context of your overall health.</p>
+      <p>AI analysis is for informational purposes only and does not constitute a medical diagnosis.
+         Always consult your physician to interpret results in the context of your overall health.</p>
     </div>
+
   </div>
 </div>
 
+{# ── Analysing overlay ── #}
 <div id="analysingOverlay" class="analysing-overlay" style="display:none;" aria-live="polite">
   <div class="analysing-box">
     <div class="analysing-spinner">
@@ -80,12 +104,14 @@
       </svg>
       <span class="analysing-emoji">&#x1F9EA;</span>
     </div>
-    <h3 class="analysing-title">Analysing your lab report&#x2026;</h3>
-    <p class="analysing-sub">Gemini Vision AI is reading every value. This usually takes 10&#x2013;30 seconds.</p>
+    <h3 class="analysing-title" id="overlayTitle">Analysing your lab report&hellip;</h3>
+    <p class="analysing-sub" id="overlaySub">
+      Gemini Vision AI is reading every value. This usually takes 10&ndash;30 seconds.
+    </p>
     <div class="analysing-steps">
       <div class="analysing-step" id="astep1">
         <span class="astep-dot astep-dot--active"></span>
-        <span>Uploading &amp; processing file</span>
+        <span>Uploading &amp; processing files</span>
       </div>
       <div class="analysing-step" id="astep2">
         <span class="astep-dot"></span>
@@ -93,11 +119,11 @@
       </div>
       <div class="analysing-step" id="astep3">
         <span class="astep-dot"></span>
-        <span>Running clinical AI interpretation</span>
+        <span>Running clinical AI interpretation per panel</span>
       </div>
       <div class="analysing-step" id="astep4">
         <span class="astep-dot"></span>
-        <span>Preparing your plain-language report</span>
+        <span id="step4Label">Synthesising cross-panel diagnoses</span>
       </div>
     </div>
     <p class="analysing-note">Do not close or refresh this page</p>
@@ -109,136 +135,245 @@
 {% block scripts %}
 <script>
 (function () {
-
   var fileInput = document.getElementById('fileInput');
   var dropZone  = document.getElementById('dropZone');
   var submitBtn = document.getElementById('submitBtn');
   var labForm   = document.getElementById('labForm');
+  var fileList  = document.getElementById('fileList');
+  var badge     = document.getElementById('multiPanelBadge');
+  var mpbCount  = document.getElementById('mpbCount');
 
-  var _realClick = fileInput.click.bind(fileInput);
+  /* ── Master accumulated file list ── */
+  var allFiles = [];
 
-  if (dropZone) {
-    dropZone.addEventListener('click', function (e) {
-      e.stopImmediatePropagation();
-      _realClick();
-    }, true);
-
-    dropZone.addEventListener('dragover', function (e) {
-      e.preventDefault();
-      dropZone.classList.add('drag-over');
-    });
-    dropZone.addEventListener('dragleave', function () {
-      dropZone.classList.remove('drag-over');
-    });
-    dropZone.addEventListener('drop', function (e) {
-      e.preventDefault();
-      dropZone.classList.remove('drag-over');
-      var files = e.dataTransfer.files;
-      if (!files.length) return;
-      var dt = new DataTransfer();
-      dt.items.add(files[0]);
-      fileInput.files = dt.files;
-      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+  /* ── Helpers ── */
+  function fileIcon(ext) {
+    return {pdf:'📄',png:'🖼',jpg:'🖼',jpeg:'🖼',docx:'📝',doc:'📝',txt:'📋',csv:'📊'}[ext] || '📁';
   }
 
-  if (fileInput) {
-    fileInput.addEventListener('change', function () {
-      if (this.files.length > 0) {
-        var f = this.files[0];
-        var ext = f.name.split('.').pop().toLowerCase();
-        var sizeKB = (f.size / 1024).toFixed(1);
-
-        var dropTitle = dropZone && dropZone.querySelector('.drop-title');
-        var dropSub   = dropZone && dropZone.querySelector('.drop-sub');
-        if (dropTitle) dropTitle.textContent = '\u2705 ' + f.name;
-        if (dropSub)   dropSub.textContent   = ext.toUpperCase() + ' \xB7 ' + sizeKB + ' KB';
-
-        var previewSection = document.getElementById('previewSection');
-        var previewImg     = document.getElementById('previewImg');
-        var previewMeta    = document.getElementById('previewMeta');
-        if (['png','jpg','jpeg'].indexOf(ext) !== -1 && previewSection && previewImg) {
-          var reader = new FileReader();
-          reader.onload = function(ev) {
-            previewImg.src = ev.target.result;
-            previewSection.classList.remove('hidden');
-          };
-          reader.readAsDataURL(f);
-        } else if (previewSection) {
-          previewSection.classList.add('hidden');
-        }
-        if (previewMeta) {
-          previewMeta.innerHTML = '<strong>' + f.name + '</strong> &middot; ' + ext.toUpperCase() + ' &middot; ' + sizeKB + ' KB';
-        }
-
-        if (submitBtn) submitBtn.disabled = false;
-      }
-    });
+  function guessPanelType(name) {
+    var n = name.toLowerCase();
+    if (/cbc|blood.?count|hemoglobin|hematol/.test(n))                              return 'CBC';
+    if (/cmp|bmp|chemistry|metabolic|electrolyte|renal|liver|lft|bun|creatinine/.test(n)) return 'Chemistry Panel';
+    if (/lipid|cholesterol|triglyceride|hdl|ldl/.test(n))                           return 'Lipid Panel';
+    if (/thyroid|tsh|t3|t4/.test(n))                                                return 'Thyroid Panel';
+    if (/urin|urinalysis/.test(n))                                                   return 'Urinalysis';
+    if (/hba1c|a1c|glycated|glucose|diabetes/.test(n))                              return 'HbA1c / Glucose';
+    if (/coag|pt |inr|ptt|aptt/.test(n))                                           return 'Coagulation';
+    if (/culture|sensitiv|micro|bacteria/.test(n))                                  return 'Microbiology';
+    if (/hormone|testosterone|estrogen|cortisol/.test(n))                           return 'Hormone Panel';
+    if (/vitamin|vit.?d|vit.?b|folate|ferritin|iron/.test(n))                      return 'Vitamins & Minerals';
+    return 'Lab Report';
   }
 
-  function runSteps() {
-    var steps  = ['astep1','astep2','astep3','astep4'];
-    var delays = [0, 1500, 4000, 8000];
-    steps.forEach(function (id, i) {
+  /* ── Push allFiles into the hidden input so the form sends them ── */
+  function syncToInput() {
+    var dt = new DataTransfer();
+    allFiles.forEach(function (f) { dt.items.add(f); });
+    fileInput.files = dt.files;
+  }
+
+  /* ── Add new files (accumulate, skip dupes, cap at 10) ── */
+  function addFiles(incoming) {
+    Array.from(incoming).forEach(function (f) {
+      var dup = allFiles.some(function (x) { return x.name === f.name && x.size === f.size; });
+      if (!dup && allFiles.length < 10) allFiles.push(f);
+    });
+    syncToInput();
+    renderChips();
+    updateButton();
+  }
+
+  /* ── Render the chip list ── */
+  function renderChips() {
+    fileList.innerHTML = '';
+
+    if (!allFiles.length) {
+      fileList.classList.add('hidden');
+      badge.classList.add('hidden');
+      dropZone.querySelector('.drop-title').textContent = 'Drop lab reports here';
+      dropZone.querySelector('.drop-sub').textContent   = 'or click to browse — up to 10 files at once';
+      return;
+    }
+
+    allFiles.forEach(function (f, i) {
+      var ext    = f.name.split('.').pop().toLowerCase();
+      var sizeKB = (f.size / 1024).toFixed(1);
+      var chip   = document.createElement('div');
+      chip.className = 'file-chip';
+      chip.innerHTML =
+        '<span class="fc-icon">' + fileIcon(ext) + '</span>' +
+        '<div class="fc-meta">' +
+          '<span class="fc-name">' + f.name + '</span>' +
+          '<span class="fc-detail">' + guessPanelType(f.name) + ' &middot; ' + ext.toUpperCase() + ' &middot; ' + sizeKB + ' KB</span>' +
+        '</div>' +
+        '<button type="button" class="fc-remove" data-idx="' + i + '" title="Remove">&#x2715;</button>';
+      fileList.appendChild(chip);
+    });
+
+    fileList.classList.remove('hidden');
+
+    var n = allFiles.length;
+    dropZone.querySelector('.drop-title').textContent = '✅ ' + n + ' file' + (n > 1 ? 's' : '') + ' selected';
+    dropZone.querySelector('.drop-sub').textContent   = 'Click to add more files';
+
+    if (n > 1) {
+      badge.classList.remove('hidden');
+      mpbCount.textContent = n + ' panels selected';
+    } else {
+      badge.classList.add('hidden');
+    }
+  }
+
+  /* ── Enable / disable the button based on allFiles ── */
+  function updateButton() {
+    submitBtn.disabled = (allFiles.length === 0);
+  }
+
+  /* ── Remove a chip ── */
+  fileList.addEventListener('click', function (e) {
+    var btn = e.target.closest('.fc-remove');
+    if (!btn) return;
+    allFiles.splice(parseInt(btn.dataset.idx, 10), 1);
+    syncToInput();
+    renderChips();
+    updateButton();
+  });
+
+  /* ── Drop zone — click opens picker ── */
+  dropZone.addEventListener('click', function (e) {
+    e.stopImmediatePropagation();
+    fileInput.click();
+  }, true);
+
+  dropZone.addEventListener('dragover',  function (e) { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', function ()  { dropZone.classList.remove('drag-over'); });
+  dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    addFiles(e.dataTransfer.files);
+  });
+
+  /* ── File input change — accumulate, reset value so re-picking same file works ── */
+  fileInput.addEventListener('change', function () {
+    if (this.files.length) addFiles(this.files);
+    this.value = '';   /* must come AFTER addFiles copies the FileList */
+  });
+
+  /* ── Progress animation ── */
+  function runSteps(multi) {
+    var ids    = ['astep1','astep2','astep3','astep4'];
+    var delays = multi ? [0,2000,6000,14000] : [0,1500,4000,8000];
+    var lbl = document.getElementById('step4Label');
+    if (lbl && !multi) lbl.textContent = 'Preparing your plain-language report';
+    ids.forEach(function (id, i) {
       setTimeout(function () {
         if (i > 0) {
-          var prev = document.getElementById(steps[i-1]);
-          var dot  = prev.querySelector('.astep-dot');
-          dot.classList.remove('astep-dot--active');
-          dot.classList.add('astep-dot--done');
-          dot.textContent = '\u2713';
+          var prev = document.getElementById(ids[i-1]);
+          if (prev) {
+            var d = prev.querySelector('.astep-dot');
+            d.classList.remove('astep-dot--active');
+            d.classList.add('astep-dot--done');
+            d.textContent = '✓';
+          }
         }
         var cur = document.getElementById(id);
-        cur.querySelector('.astep-dot').classList.add('astep-dot--active');
-        cur.style.opacity = '1';
+        if (cur) {
+          cur.querySelector('.astep-dot').classList.add('astep-dot--active');
+          cur.style.opacity = '1';
+        }
       }, delays[i]);
     });
   }
 
-  if (labForm) {
-    labForm.addEventListener('submit', function (e) {
-      if (!fileInput || !fileInput.files.length) { e.preventDefault(); return; }
-      var overlay = document.getElementById('analysingOverlay');
-      if (overlay) { overlay.style.display = 'flex'; runSteps(); }
-      var fill = document.getElementById('progressFill');
-      var bar  = document.getElementById('progressBar');
-      if (bar && fill) {
-        bar.classList.remove('hidden');
-        var pct = 0;
-        setInterval(function () {
-          pct = Math.min(pct + (Math.random() * 4 + 1), 90);
-          fill.style.width = pct + '%';
-        }, 600);
-      }
-    });
-  }
+  /* ── Form submit ── */
+  labForm.addEventListener('submit', function (e) {
+    /* Guard: must have files in allFiles AND synced to input */
+    if (!allFiles.length) { e.preventDefault(); return; }
+
+    /* Re-sync just before submit in case browser cleared the input */
+    syncToInput();
+
+    var n       = allFiles.length;
+    var multi   = n > 1;
+    var overlay = document.getElementById('analysingOverlay');
+    var title   = document.getElementById('overlayTitle');
+    var sub     = document.getElementById('overlaySub');
+
+    if (overlay) {
+      overlay.style.display = 'flex';
+      if (title) title.textContent = multi ? 'Analysing ' + n + ' lab panels…' : 'Analysing your lab report…';
+      if (sub)   sub.textContent   = multi
+        ? 'Each panel is read individually, then cross-panel diagnoses are synthesised. This may take 30–90 seconds.'
+        : 'Gemini Vision AI is reading every value. This usually takes 10–30 seconds.';
+      runSteps(multi);
+    }
+
+    var bar  = document.getElementById('progressBar');
+    var fill = document.getElementById('progressFill');
+    if (bar && fill) {
+      bar.classList.remove('hidden');
+      var pct = 0;
+      setInterval(function () {
+        pct = Math.min(pct + Math.random() * 3 + 0.5, 88);
+        fill.style.width = pct + '%';
+      }, 800);
+    }
+  });
+
+  /* ── Init ── */
+  updateButton();
 
 })();
 </script>
 
 <style>
+/* ── Drop zone hover ── */
 .drop-zone.drag-over{border-color:#6366f1!important;background:rgba(99,102,241,.1)!important;transform:scale(1.01)}
+
+/* ── Info cards ── */
 .info-card--ai{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1));border-color:rgba(99,102,241,.3)!important}
 .info-card--ai h3{color:#a5b4fc}
+.info-card--tip{background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(5,150,105,.04));border-color:rgba(16,185,129,.25)!important}
+.info-card--tip h3{color:#6ee7b7}
+
+/* ── File chip list ── */
+.file-list{display:flex;flex-direction:column;gap:.5rem;margin:.9rem 0}
+.file-chip{display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;transition:background .15s}
+.file-chip:hover{background:rgba(255,255,255,.07)}
+.fc-icon{font-size:1.2rem;flex-shrink:0}
+.fc-meta{flex:1;min-width:0}
+.fc-name{display:block;font-size:.83rem;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc-detail{display:block;font-size:.7rem;color:#64748b;margin-top:.15rem}
+.fc-remove{background:none;border:none;color:#64748b;cursor:pointer;font-size:.85rem;padding:.2rem .4rem;border-radius:6px;flex-shrink:0;transition:color .15s,background .15s}
+.fc-remove:hover{color:#f87171;background:rgba(239,68,68,.12)}
+
+/* ── Multi-panel badge ── */
+.multi-panel-badge{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.08));border:1.5px solid rgba(99,102,241,.3);border-radius:12px;margin-bottom:.75rem}
+.mpb-icon{font-size:1.4rem;flex-shrink:0}
+.mpb-text strong{display:block;font-size:.87rem;color:#c7d2fe;font-weight:700}
+.mpb-text span{display:block;font-size:.75rem;color:#94a3b8;margin-top:.1rem;line-height:1.4}
+
+/* ── Analysing overlay ── */
 .analysing-overlay{position:fixed;inset:0;z-index:900;background:rgba(10,14,26,.93);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1.5rem}
-.analysing-box{display:flex;flex-direction:column;align-items:center;gap:1.25rem;text-align:center;max-width:340px;width:100%}
+.analysing-box{display:flex;flex-direction:column;align-items:center;gap:1.25rem;text-align:center;max-width:360px;width:100%}
 .analysing-spinner{position:relative;width:90px;height:90px;flex-shrink:0}
 .analysing-svg{width:100%;height:100%}
 .analysing-arc{transform-origin:center;animation:spinArc 1.4s linear infinite}
 @keyframes spinArc{from{transform:rotate(-90deg)}to{transform:rotate(270deg)}}
 .analysing-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;animation:labPulse 2s ease-in-out infinite}
 @keyframes labPulse{0%,100%{transform:scale(.9);opacity:.7}50%{transform:scale(1.05);opacity:1}}
-.analysing-title{font-size:1.15rem;font-weight:700;color:var(--text-primary,#e2e8f0);margin:0}
-.analysing-sub{font-size:.83rem;color:var(--text-muted,#94a3b8);line-height:1.55;margin:0}
+.analysing-title{font-size:1.1rem;font-weight:700;color:#e2e8f0;margin:0}
+.analysing-sub{font-size:.82rem;color:#94a3b8;line-height:1.55;margin:0}
 .analysing-steps{width:100%;display:flex;flex-direction:column;gap:.5rem}
-.analysing-step{display:flex;align-items:center;gap:.75rem;padding:.55rem .875rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;font-size:.82rem;color:var(--text-muted,#94a3b8);opacity:.45;transition:opacity .4s,border-color .4s,background .4s;text-align:left}
+.analysing-step{display:flex;align-items:center;gap:.75rem;padding:.55rem .875rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;font-size:.82rem;color:#94a3b8;opacity:.45;transition:opacity .4s,border-color .4s,background .4s;text-align:left}
 .analysing-step:has(.astep-dot--active),.analysing-step:has(.astep-dot--done){opacity:1}
 .analysing-step:has(.astep-dot--active){border-color:rgba(99,102,241,.45);background:rgba(99,102,241,.1);color:#c7d2fe}
 .analysing-step:has(.astep-dot--done){border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.07);color:#86efac}
-.astep-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,.15);font-size:.65rem;display:flex;align-items:center;justify-content:center;font-style:normal}
+.astep-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,.15);font-size:.65rem;display:flex;align-items:center;justify-content:center}
 .astep-dot--active{background:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.3);animation:dotPulse 1s ease-in-out infinite}
-.astep-dot--done{background:#22c55e;font-size:.65rem;width:16px;height:16px;color:#fff}
+.astep-dot--done{background:#22c55e;width:16px;height:16px;color:#fff;font-size:.65rem}
 @keyframes dotPulse{0%,100%{box-shadow:0 0 0 3px rgba(99,102,241,.3)}50%{box-shadow:0 0 0 6px rgba(99,102,241,.15)}}
-.analysing-note{font-size:.73rem;color:var(--text-muted,#94a3b8);opacity:.65;margin:0}
+.analysing-note{font-size:.73rem;color:#94a3b8;opacity:.65;margin:0}
 </style>
 {% endblock %}
