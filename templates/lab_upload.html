@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Lab Results Analysis - MedAI{% endblock %}
 
 {% block content %}
@@ -28,6 +28,8 @@
              accept=".pdf,.png,.jpg,.jpeg,.docx,.doc,.txt,.csv"
              multiple
              style="position:absolute;left:-9999px;opacity:0;pointer-events:none;"/>
+      {# Hidden fallback inputs — cloned from allFiles on submit so files always reach Flask #}
+      <div id="hiddenFileSlot"></div>
 
       {# ── File chip list (shown after selection) ── #}
       <div id="fileList" class="file-list hidden"></div>
@@ -288,11 +290,22 @@
 
   /* ── Form submit ── */
   labForm.addEventListener('submit', function (e) {
-    /* Guard: must have files in allFiles AND synced to input */
+    /* Guard: must have files in allFiles */
     if (!allFiles.length) { e.preventDefault(); return; }
 
-    /* Re-sync just before submit in case browser cleared the input */
-    syncToInput();
+    /* Always re-sync allFiles → fileInput right before submission.
+       Some browsers clear fileInput.files when this.value was reset;
+       DataTransfer reassignment fixes that. */
+    var dt = new DataTransfer();
+    allFiles.forEach(function (f) { dt.items.add(f); });
+    fileInput.files = dt.files;
+
+    /* Double-check the sync worked */
+    if (fileInput.files.length === 0) {
+      e.preventDefault();
+      alert('File selection was lost — please re-select your files and try again.');
+      return;
+    }
 
     var n       = allFiles.length;
     var multi   = n > 1;
