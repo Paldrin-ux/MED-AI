@@ -331,9 +331,53 @@ def _parse_json_array(raw: str) -> list:
     return []
 
 
+def _extract_findings_json(text: str) -> list:
+    """
+    Robust extractor for FINDINGS_JSON.
+    Gemini returns the array spanning multiple lines; _get_multiline
+    joins them with spaces which can break the JSON.  This function
+    instead scans forward by bracket depth so the full array is captured.
+    """
+    lines      = text.splitlines()
+    collecting = False
+    buffer     = []
+    depth      = 0
+
+    for line in lines:
+        s = line.strip()
+
+        if not collecting:
+            if s.upper().startswith("FINDINGS_JSON:"):
+                rest = s[len("FINDINGS_JSON:"):].strip()
+                if rest:
+                    buffer.append(rest)
+                    depth += rest.count("[") - rest.count("]")
+                collecting = True
+            continue
+
+        # Once collecting, track bracket depth
+        depth += s.count("[") - s.count("]")
+        buffer.append(s)
+
+        # Stop once the opening bracket is fully closed
+        if depth <= 0 and buffer:
+            break
+
+    raw    = " ".join(buffer)
+    result = _parse_json_array(raw)
+    if result:
+        return result
+
+    # Fallback: grab everything after FINDINGS_JSON: and scan for array
+    marker = text.upper().find("FINDINGS_JSON:")
+    if marker != -1:
+        chunk = text[marker + len("FINDINGS_JSON:"):]
+        return _parse_json_array(chunk)
+    return []
+
+
 def _parse_panel_response(text: str) -> dict:
-    findings_raw = _get_multiline(text, "FINDINGS_JSON")
-    findings     = _parse_json_array(findings_raw)
+    findings = _extract_findings_json(text)
 
     def safe_int(key, default=0):
         try:    return int(_get_field(text, key, str(default)))
